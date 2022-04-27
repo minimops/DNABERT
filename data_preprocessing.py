@@ -193,97 +193,72 @@ def ft_split_sequences_rand(seq_list, sample_amt, cutLength):
 # other half is randomly sampled starts
 # randomly sample half cap amount
 
-def ft_df_creation_2(class_dirs, cap, split, cutlength, kmer, labels=0):
-    n_o_number = int(cap * split)
-    sam_number = cap - n_o_number
-
+def ft_df_creation(class_dirs, cap, cutlength, kmer):
     cl_df_list = []
     label_iter = 0
+    # just to count left out sequences
+    lo_counter_list = []
 
     for c in class_dirs:
         split_seq_list = []
         list_seqs = parse_fasta(c, lol=True)
         list_seqs = removeNAseq_ft(list_seqs)
-
+        lo_counter = 0
         # for every fasta file:
         for los in list_seqs:
-            n_o_list = []
             sam_list = []
             # for every sequence in file
             for seq in los:
                 if len(seq) <= cutlength:
                     print("left out a seq because of seq length of: " + str(len(seq)))
+                    lo_counter += 1
                     continue
-                # create seq from 1 to end by cutlength
-                starts_no = list(range(0, len(seq) + 1, cutlength))
-                # cut out sequences and add to no list
-                n_o_list.extend([seq[i:i+cutlength] for i in starts_no])
-                # create random starts same number as n-o starts
-                starts_sam = numpy.random.randint(0, len(seq) - cutlength + 1 + 1, len(starts_no))
-                sam_list.extend([seq[i:i+cutlength] for i in starts_sam])
-
+                last_possible_cut = len(seq) - cutlength + 1
+                starts_sam = numpy.random.choice(last_possible_cut, min(last_possible_cut, cap), replace=False)
+                sam_list.extend([seq[i:i + cutlength] for i in starts_sam])
             # sample elements of lists to match cap
-            if len(n_o_list) > n_o_number:
-                n_o_list = random.sample(n_o_list, n_o_number)
-            if len(sam_list) > sam_number:
-                sam_list = random.sample(sam_list, sam_number)
-            split_seq_list.extend(n_o_list)
+            # this is done for files with multiple sequences longer than cutlength + cap
+            if len(sam_list) > cap:
+                sam_list = random.sample(sam_list, cap)
             split_seq_list.extend(sam_list)
         # create kmers
         split_seq_kmer_list = list2kmer(split_seq_list, kmer)
         # create df
         cl_df_list.append(pd.DataFrame({'sequence': split_seq_kmer_list,
-                                        'label': labels if labels != 0 else label_iter}))
+                                        'label': label_iter}))
+        lo_counter_list.append(lo_counter)
         label_iter += 1
     # all classes together
     full_df = pd.concat(cl_df_list)
     # shuffle
     full_df = full_df.sample(frac=1).reset_index(drop=True)
-    return full_df
+    return full_df, lo_counter_list
 
 
-def ft_df_creation(class_dirs, sample_amt, kmer, cutLength, labels=0):
-    cl_df_list = []
-    label_iter = 0
-    for c in class_dirs:
-        split_seq_list = []  # placeholder
-        list_seqs = parse_fasta(c, lol=True)
-        list_seqs = removeNAseq_ft(list_seqs)
-        # create list of lists of sequences
-        # for every listentry do the following x times
-        for los in list_seqs:
-            iters = int(sample_amt / len(los))
-            split_seq_list.extend(ft_split_sequences_rand(los, iters, cutLength))
-
-        # create kmers
-        split_seq_kmer_list = list2kmer(split_seq_list, kmer)
-        cl_df_list.append(pd.DataFrame({'sequence': split_seq_kmer_list,
-                                        'label': labels if labels != 0 else label_iter}))
-        label_iter += 1
-
-    full_df = pd.concat(cl_df_list)
-    # shuffle
-    full_df = full_df.sample(frac=1).reset_index(drop=True)
-    return full_df
-
-
-def ft_data_process(dirlists, name, path, cap, split, cutLength, kmer, add_info='', labels=0):
+def ft_data_process(dirlists, name, path, cap, cutlength, kmer, add_info='', labels=None):
     # TODO missing assert str and len of dirList
     # create dir
     location = create_dir(name, path)
-    lines = []
+    lines = ["Data from dirs: " + str(list(map(', '.join, dirlists))),
+             "Cut length: " + str(cutlength),
+             "Kmer: " + str(kmer)
+             ]
+    if labels is not None:
+        lines.append("labels %s are %s" % (labels if labels is not None else '',
+                                           list(range(len(labels)))))
     # for test and train dirlists
     filenameList = ['dev', 'train']
     for i in range(len(dirlists)):
         # write train/test file
-        ft_df_creation_2(class_dirs=dirlists[i], cap=cap, split=split, cutlength=cutLength,
-                         kmer=kmer, labels=labels).to_csv(
-            location + "/" + filenameList[i] + ".tsv", sep='\t', index=False)
+        ft_pd, lo_counter = ft_df_creation(class_dirs=dirlists[i], cap=cap, cutlength=cutlength,
+                                           kmer=kmer)
+        ft_pd.to_csv(location + "/" + filenameList[i] + ".tsv", sep='\t', index=False)
+        lines.append("Left out sequences in %s file due to length: %s of classes %s"
+                     % (['evaluation', 'training'][i],
+                        ", ".join([str(x) for x in lo_counter]),
+                        ", ".join(
+                            [str(y) for y in (labels if labels is not None else numpy.arange(len(dirlists[i])))])))
+
     # write info file
-    lines.extend(["\n",
-                  "Data from dirs: " + str(list(map(', '.join, dirlists))),
-                  "Cut length: " + str(cutLength),
-                  "Kmer: " + str(kmer)
-                  ])
     lines.append(add_info)
     create_data_info_file(location, lines)
