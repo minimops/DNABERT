@@ -15,6 +15,8 @@
 # limitations under the License.
 """ Finetuning the library models for sequence classification on GLUE (Bert, XLM, XLNet, RoBERTa, Albert, XLM-RoBERTa)."""
 
+# additional imports
+from os.path import exists
 
 import argparse
 import glob
@@ -376,7 +378,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 
-def evaluate(args, model, tokenizer, prefix="", evaluate=True):
+def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
@@ -454,17 +456,25 @@ def evaluate(args, model, tokenizer, prefix="", evaluate=True):
             if not os.path.exists(args.result_dir): 
                 os.makedirs(args.result_dir)
         output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
+
+        # write the first line of eval_results file
+        if not exists(output_eval_file):
+            eval_result = "\t".join(["global_step", "eval_loss"]) + "\t" + "\t".join(result.keys()) + "\n"
+        else:
+            eval_result = "\t".join([str(x) for x in [global_step, eval_loss]]) + "\t"
+
         with open(output_eval_file, "a") as writer:
 
-            if args.task_name[:3] == "dna":
-                eval_result = args.data_dir.split('/')[-1] + " "
-            else:
-                eval_result = ""
+            # if args.task_name[:3] == "dna":
+            #     eval_result = args.data_dir.split('/')[-1] + " "
+            # else:
+            #     eval_result = ""
 
             logger.info("***** Eval results {} *****".format(prefix))
             for key in sorted(result.keys()):
                 logger.info("  %s = %s", key, str(result[key]))
-                eval_result = eval_result + str(result[key])[:5] + " "
+                eval_result = eval_result + str(result[key])[:8] + "\t"
+
             writer.write(eval_result + "\n")
 
     if args.do_ensemble_pred:
@@ -1139,7 +1149,7 @@ def main():
 
             model = model_class.from_pretrained(checkpoint)
             model.to(args.device)
-            result = evaluate(args, model, tokenizer, prefix=prefix)
+            result = evaluate(args, model, tokenizer, global_step, prefix=prefix)
             result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
             results.update(result)
 
