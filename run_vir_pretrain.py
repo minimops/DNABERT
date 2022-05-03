@@ -1,26 +1,30 @@
 # script to be run for pretraining
 
-from DNABERT.run_funs import create_dir, create_info_file, complete_info_file
+from DNABERT.run_funs import create_dir, create_run_info_file, complete_run_info_file
 from DNABERT.examples.run_pretrain import main
 
 
-def pretrain(args, dirname, data_path, add_info, dirpath='DNABERT/Test_runs/pt'):
+# def pt()
+
+
+def pretrain(dirname, data_path, add_info, dirpath='DNABERT/Test_runs'):
     # create dir
     location = create_dir(dirname, dirpath)
     # create info file
-    create_info_file(data_path, location, add_info)
+    create_run_info_file(data_path, location, add_info)
 
+    # TODO this tryCatch handling apparently not great
     # run pretraining
     try:
         msg = ''
-        # this the way to do it?
+        #TODO this the way to do it?
         main()
     except Exception as inst:
         msg = str(str(type(inst)) + '\n' +
                   ', '.join(inst.args) + '\n')
     finally:
         # complete info file
-        complete_info_file(location, msg)
+        complete_run_info_file(location, msg)
         if 'inst' in locals():
             raise inst
 

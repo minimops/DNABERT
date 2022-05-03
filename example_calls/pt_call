@@ -1,0 +1,39 @@
+cd examples
+
+export KMER=6
+export TRAIN_FILE=../created_data/pt_1_percent/full_kmers.txt
+export TEST_FILE=../created_data/pt_1_percent/full_kmers.txt
+export SOURCE=../
+export OUTPUT_PATH=../Test_runs/pt_10_percent_bert_mini
+
+python run_pretrain.py \
+    --output_dir $OUTPUT_PATH \
+    --model_type=dna \
+    --tokenizer_name=dna$KMER \
+    --config_name=$SOURCE/src/transformers/dnabert-config/bert-config-$KMER/config.json \
+    --do_train \
+    --train_data_file=$TRAIN_FILE \
+    --do_eval \
+    --eval_data_file=$TEST_FILE \
+    --mlm \
+    --gradient_accumulation_steps 25 \
+    --per_gpu_train_batch_size 40 \
+    --per_gpu_eval_batch_size 30 \
+    --save_steps 500 \
+    --save_total_limit 30 \
+    --max_steps 2000 \
+    --evaluate_during_training \
+    --logging_steps 50 \
+    --line_by_line \
+    --learning_rate 4e-3 \
+    --block_size 512 \
+    --adam_epsilon 1e-6 \
+    --weight_decay 0.01 \
+    --beta1 0.9 \
+    --beta2 0.98 \
+    --mlm_probability 0.025 \
+    --warmup_steps 300 \
+    --overwrite_output_dir \
+    --n_process 24 \
+    --add_run_info 'training something to have some sort of baseline with 10 percent of the data.
+     medium learning rate of 4e-3. Bigger Bert Model of 4 (BERT mini).'

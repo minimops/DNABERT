@@ -1,12 +1,12 @@
 import random
 import numpy.random
 import pandas as pd
-from math import floor
 from Bio import SeqIO
 from statistics import mean, median
 import os
-from DNABERT.motif.motif_utils import seq2kmer
-from DNABERT.run_funs import create_dir, create_data_info_file
+from math import ceil
+from motif.motif_utils import seq2kmer
+from run_funs import create_dir, create_data_info_file
 
 
 # converts a directory of fasta files into a list of strings
@@ -33,10 +33,13 @@ def parse_fasta(dir_: str, lol=False):
 # TODO this is suuper dirty but was rushed for now, getting into python
 # non overlapping splitting
 def split_sequences_no(seq_list, low_b=5, upp_b=510, rat_max=.5):
-    if (low_b >= upp_b):
+    if low_b >= upp_b:
         raise ValueError('upp_b has to be bigger than low_b')
     split_seq_list = []
     for seq in seq_list:
+        if len(seq) < low_b:
+            print("sequence skipped because of length < %s" % low_b)
+            continue
         n = []
         diff = len(seq)
         while diff > 0:
@@ -64,8 +67,11 @@ def split_sequences_rand(seq_list, low_b=5, upp_b=510, rat_max=.5):
     expL = ((((upp_b - low_b) / 2) * (1 - rat_max)) + upp_b * rat_max)
     # for each sequence
     for seq in seq_list:
-        # TODO maybe not floor
-        amt = floor(len(seq) / expL)
+        if len(seq) < low_b:
+            print("sequence skipped because of length < %s" % low_b)
+            continue
+        # ceiling here to create at least some for short seqs
+        amt = ceil(len(seq) / expL)
         for i in range(amt):
             cutLength = sample_cut_length(low_b, min(upp_b, len(seq)), rat_max)
             # double plus one cuz of range and to include possibility of up to end
@@ -136,8 +142,7 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
         split_seqs_both.extend(n_o_cut)
         split_seqs_both.extend(samp_cut)
 
-        lines.extend(["\n",
-                      "Data from dir: " + d,
+        lines.extend(["Data from dir: " + d,
                       "Number of non NA sequences: " + str(len(seqs)),
                       "Median length of seq: " + str(median(map(len, seqs))),
                       "Average length of seq: " + str(mean(map(len, seqs))),
@@ -148,7 +153,7 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
                       "Kmer: " + str(kmer)
                       ])
 
-    lines.append(add_info)
+    lines.append("\n" + add_info)
 
     random.shuffle(split_seqs_both)
 
@@ -170,28 +175,6 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
     # write info file
     create_data_info_file(location, lines)
 
-
-def ft_split_sequences_rand(seq_list, sample_amt, cutLength):
-    split_seq_list = []
-    for seq in seq_list:
-        if len(seq) <= cutLength:
-            print("left out a seq because of seq length of: " + str(len(seq)))
-            continue
-        for i in range(sample_amt):
-            # double plus one cuz of range and to include possibility of up to end
-            cutStart = numpy.random.randint(0, len(seq) - cutLength + 1 + 1)
-            split_seq_list.append(seq[cutStart:cutStart + cutLength])
-    return split_seq_list
-
-
-# idea
-# there is a maximum cap per fasta file of 256
-# calc average and median of seq len per fasta file
-# half of this is non overlap splitting
-# get all starts
-# if greater than half of cap, sample half cap amount
-# other half is randomly sampled starts
-# randomly sample half cap amount
 
 def ft_df_creation(class_dirs, cap, cutlength, kmer):
     cl_df_list = []
@@ -241,24 +224,30 @@ def ft_data_process(dirlists, name, path, cap, cutlength, kmer, add_info='', lab
     location = create_dir(name, path)
     lines = ["Data from dirs: " + str(list(map(', '.join, dirlists))),
              "Cut length: " + str(cutlength),
-             "Kmer: " + str(kmer)
+             "Kmer: " + str(kmer),
+             "cap: %s" % cap,
+             "\n"
              ]
     if labels is not None:
         lines.append("labels %s are %s" % (labels if labels is not None else '',
                                            list(range(len(labels)))))
     # for test and train dirlists
     filenameList = ['dev', 'train']
+    # TODO length check here between filenameList and dirlists
     for i in range(len(dirlists)):
         # write train/test file
         ft_pd, lo_counter = ft_df_creation(class_dirs=dirlists[i], cap=cap, cutlength=cutlength,
                                            kmer=kmer)
         ft_pd.to_csv(location + "/" + filenameList[i] + ".tsv", sep='\t', index=False)
-        lines.append("Left out sequences in %s file due to length: %s of classes %s"
-                     % (['evaluation', 'training'][i],
-                        ", ".join([str(x) for x in lo_counter]),
-                        ", ".join(
-                            [str(y) for y in (labels if labels is not None else numpy.arange(len(dirlists[i])))])))
-
+        lines.extend(["%s file:" % (filenameList[i]),
+                      "Left out sequences due to length: %s of classes %s"
+                      % (", ".join([str(x) for x in lo_counter]),
+                         ", ".join(
+                             [str(y) for y in (
+                                 labels if labels is not None else numpy.arange(len(dirlists[i])))])),
+                      "Number of %s sub-sequences: %s" % (filenameList[i], str(len(ft_pd.index))),
+                      "By class count: \n%s" % (str(ft_pd['label'].value_counts())),
+                      "\n"])
     # write info file
     lines.append(add_info)
     create_data_info_file(location, lines)

@@ -17,6 +17,7 @@
 
 # additional imports
 from os.path import exists
+import atexit
 
 import argparse
 import glob
@@ -73,6 +74,7 @@ from transformers import glue_convert_examples_to_features as convert_examples_t
 from transformers import glue_output_modes as output_modes
 from transformers import glue_processors as processors
 
+from run_funs import create_run_info_file, complete_run_info_file
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -305,7 +307,7 @@ def train(args, train_dataset, model, tokenizer):
                     if (
                         args.local_rank == -1 and args.evaluate_during_training
                     ):  # Only evaluate when single GPU otherwise metrics may not average well
-                        results = evaluate(args, model, tokenizer)
+                        results = evaluate(args, model, tokenizer, global_step)
 
 
                         if args.task_name == "dna690":
@@ -455,11 +457,12 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
             eval_output_dir = args.result_dir
             if not os.path.exists(args.result_dir): 
                 os.makedirs(args.result_dir)
-        output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
+        output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.tsv")
 
         # write the first line of eval_results file
         if not exists(output_eval_file):
-            eval_result = "\t".join(["global_step", "eval_loss"]) + "\t" + "\t".join(result.keys()) + "\n"
+            eval_result = "\t".join(["global_step", "eval_loss"]) + "\t" + "\t".join(result.keys()) \
+                          + "\n" + str(global_step) + "\t"
         else:
             eval_result = "\t".join([str(x) for x in [global_step, eval_loss]]) + "\t"
 
@@ -842,7 +845,12 @@ def main():
         required=True,
         help="The output directory where the model predictions and checkpoints will be written.",
     )
-    
+    parser.add_argument(
+        "--add_run_info",
+        type=str,
+        required=True,
+        help="Info string to provide info to the current run"
+    )
     
     # Other parameters
     parser.add_argument(
@@ -1046,6 +1054,13 @@ def main():
         args.fp16,
     )
 
+    # insert info file creation
+    # Create output directory if needed
+    if args.local_rank in [-1, 0]:
+        os.makedirs(args.output_dir, exist_ok=True)
+    create_run_info_file(data_path=args.data_dir, path=args.output_dir,
+                         add_info=args.add_run_info, phase='finetuning', model_dir=args.model_name_or_path)
+
     # Set seed
     set_seed(args)
 
@@ -1243,9 +1258,10 @@ def main():
                 args.data_dir = args.data_dir.replace("/"+str(kmer-1), "/"+str(kmer))
 
             if args.result_dir.split('/')[-1] == "test.npy":
-                results, eval_task, _, out_label_ids, probs = evaluate(args, model, tokenizer, prefix=prefix)
+                results, eval_task, _, out_label_ids, probs = evaluate(args, model, tokenizer, global_step, prefix=prefix)
             elif args.result_dir.split('/')[-1] == "train.npy":
-                results, eval_task, _, out_label_ids, probs = evaluate(args, model, tokenizer, prefix=prefix, evaluate=False)
+                results, eval_task, _, out_label_ids, probs = evaluate(args, model, tokenizer, global_step,
+                                                                       prefix=prefix, evaluate=False)
             else:
                 raise ValueError("file name in result_dir should be either test.npy or train.npy")
 
@@ -1284,7 +1300,11 @@ def main():
             logger.info("  %s = %s", key, str(ensemble_results[key]))    
 
 
-            
+
+    # TODO this position means it will run at the end of training?
+    # maybe use this here?:
+    # https://stackoverflow.com/questions/9741351/how-to-find-exit-code-or-reason-when-atexit-callback-is-called-in-python
+    atexit.register(complete_run_info_file, path=args.output_dir, msg=None)
 
 
     return results

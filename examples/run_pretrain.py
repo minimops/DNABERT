@@ -19,7 +19,7 @@ GPT and GPT-2 are fine-tuned using a causal language modeling (CLM) loss while B
 using a masked language modeling (MLM) loss.
 """
 
-
+import atexit
 import argparse
 import glob
 import logging
@@ -28,6 +28,7 @@ import pickle
 import random
 import re
 import shutil
+from os.path import exists
 from typing import Dict, List, Tuple
 from copy import deepcopy
 from multiprocessing import Pool
@@ -39,6 +40,7 @@ from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampl
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
+# from run_funs import create_run_info_file, complete_run_info_file
 from transformers import (
     WEIGHTS_NAME,
     AdamW,
@@ -66,6 +68,8 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
+
+from run_funs import create_run_info_file, complete_run_info_file
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -548,14 +552,21 @@ def evaluate(args, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prefi
 
     result = {"perplexity": perplexity, "eval_loss": eval_loss}
 
-    output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.txt")
+    output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.tsv")
+    if not exists(output_eval_file):
+        headers = ("\t".join(result.keys()) + "\n")
+    else:
+        headers = None
     with open(output_eval_file, "a") as writer:
+        # write the first line of eval_results file
+        if headers is not None:
+            writer.write(headers + "\n")
         logger.info("***** Eval results {} *****".format(prefix))
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(float(result[key])))
-            #writer.write(str(float(perplexity)) + "\n")
-            writer.write("%s = %s\n" % (key, str(float(result[key]))))
-
+            # writer.write(str(float(perplexity)) + "\n")
+            writer.write("%s\t" % str(float(result[key])))
+        writer.write("\n")
     return result
 
 
@@ -574,6 +585,12 @@ def main():
     )
     parser.add_argument(
         "--model_type", type=str, required=True, help="The model architecture to be trained or fine-tuned.",
+    )
+    parser.add_argument(
+        "--add_run_info",
+        type=str,
+        required=True,
+        help="Info string to provide info to the current run"
     )
 
     # Other parameters
@@ -768,6 +785,13 @@ def main():
         args.fp16,
     )
 
+    # insert info file creation
+    # Create output directory if needed
+    if args.local_rank in [-1, 0]:
+        os.makedirs(args.output_dir, exist_ok=True)
+    create_run_info_file(data_path=args.train_data_file, path=args.output_dir,
+                         add_info=args.add_run_info)
+
     # Set seed
     set_seed(args)
 
@@ -877,6 +901,11 @@ def main():
             result = evaluate(args, model, tokenizer, prefix=prefix)
             result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
             results.update(result)
+
+    # TODO this position means it will run at the end of training?
+    # maybe use this here?:
+    # https://stackoverflow.com/questions/9741351/how-to-find-exit-code-or-reason-when-atexit-callback-is-called-in-python
+    atexit.register(complete_run_info_file, path=args.output_dir, msg=None)
 
     return results
 
