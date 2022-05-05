@@ -383,6 +383,11 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
+    # writing as txt file as a quick and dirty solution
+    if not os.path.exists(args.output_dir + "/total_steps.txt"):
+        with open (args.output_dir + "/total_steps.txt", "w+") as f:
+            f.write("%s" % t_total)
+
     global_step = 0
     epochs_trained = 0
     steps_trained_in_current_epoch = 0
@@ -462,7 +467,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
                     if (
                         args.local_rank == -1 and args.evaluate_during_training
                     ):  # Only evaluate when single GPU otherwise metrics may not average well
-                        results = evaluate(args, model, tokenizer)
+                        results = evaluate(args, global_step, model, tokenizer)
                         for key, value in results.items():
                             tb_writer.add_scalar("eval_{}".format(key), value, global_step)
                     tb_writer.add_scalar("lr", scheduler.get_lr()[0], global_step)
@@ -502,7 +507,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
     return global_step, tr_loss / global_step
 
 
-def evaluate(args, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prefix="") -> Dict:
+def evaluate(args, global_step, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prefix="") -> Dict:
     # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_output_dir = args.output_dir
 
@@ -552,20 +557,24 @@ def evaluate(args, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prefi
 
     result = {"perplexity": perplexity, "eval_loss": eval_loss}
 
-    output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.tsv")
+    output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.csv")
     if not exists(output_eval_file):
-        headers = ("\t".join(result.keys()) + "\n")
+        headers = ("global_step" + "," + ",".join(sorted(result.keys())))
     else:
         headers = None
+    if str(global_step) == "":
+        with open(args.output_dir + "/total_steps.txt") as f:
+            global_step = f.read()
     with open(output_eval_file, "a") as writer:
         # write the first line of eval_results file
         if headers is not None:
             writer.write(headers + "\n")
         logger.info("***** Eval results {} *****".format(prefix))
+        writer.write(str(global_step) + ",")
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(float(result[key])))
             # writer.write(str(float(perplexity)) + "\n")
-            writer.write("%s\t" % str(float(result[key])))
+            writer.write("%.8f," % float(result[key]))
         writer.write("\n")
     return result
 
@@ -898,7 +907,7 @@ def main():
 
             model = model_class.from_pretrained(checkpoint)
             model.to(args.device)
-            result = evaluate(args, model, tokenizer, prefix=prefix)
+            result = evaluate(args, global_step, model, tokenizer, prefix=prefix)
             result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
             results.update(result)
 

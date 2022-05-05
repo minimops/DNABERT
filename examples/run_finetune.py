@@ -231,6 +231,11 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
+    # writing as txt file as a quick and dirty solution
+    if not os.path.exists(args.output_dir + "/total_steps.txt"):
+        with open (args.output_dir + "/total_steps.txt", "w+") as f:
+            f.write("%s" % t_total)
+
     global_step = 0
     epochs_trained = 0
     steps_trained_in_current_epoch = 0
@@ -457,14 +462,17 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
             eval_output_dir = args.result_dir
             if not os.path.exists(args.result_dir): 
                 os.makedirs(args.result_dir)
-        output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.tsv")
+        output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.csv")
 
         # write the first line of eval_results file
+        if str(global_step) == "":
+            with open(args.output_dir + "/total_steps.txt") as f:
+                global_step = f.read()
+        eval_result = ""
         if not exists(output_eval_file):
-            eval_result = "\t".join(["global_step", "eval_loss"]) + "\t" + "\t".join(result.keys()) \
-                          + "\n" + str(global_step) + "\t"
-        else:
-            eval_result = "\t".join([str(x) for x in [global_step, eval_loss]]) + "\t"
+            eval_result = ",".join(["global_step", "eval_loss"]) + "," + ",".join(sorted(result.keys())) \
+                          + "\n"
+        eval_result = eval_result + ",".join([str(x) for x in [global_step, eval_loss]]) + ","
 
         with open(output_eval_file, "a") as writer:
 
@@ -476,8 +484,9 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
             logger.info("***** Eval results {} *****".format(prefix))
             for key in sorted(result.keys()):
                 logger.info("  %s = %s", key, str(result[key]))
-                eval_result = eval_result + str(result[key])[:8] + "\t"
-
+                eval_result = eval_result + ("%.6f" % result[key])
+                if key is not sorted(result.keys())[-1]:
+                    eval_result = eval_result + ","
             writer.write(eval_result + "\n")
 
     if args.do_ensemble_pred:

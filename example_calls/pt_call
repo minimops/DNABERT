@@ -4,7 +4,7 @@ export KMER=6
 export TRAIN_FILE=../created_data/pt_1_percent/full_kmers.txt
 export TEST_FILE=../created_data/pt_1_percent/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=../Test_runs/pt_10_percent_bert_mini
+export OUTPUT_PATH=../Test_runs/pt_crashing_and_restarting
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
@@ -19,13 +19,13 @@ python run_pretrain.py \
     --gradient_accumulation_steps 25 \
     --per_gpu_train_batch_size 40 \
     --per_gpu_eval_batch_size 30 \
-    --save_steps 500 \
+    --save_steps 50 \
     --save_total_limit 30 \
-    --max_steps 2000 \
+    --max_steps 500 \
     --evaluate_during_training \
     --logging_steps 50 \
     --line_by_line \
-    --learning_rate 4e-3 \
+    --learning_rate 8e-3 \
     --block_size 512 \
     --adam_epsilon 1e-6 \
     --weight_decay 0.01 \
@@ -35,5 +35,6 @@ python run_pretrain.py \
     --warmup_steps 300 \
     --overwrite_output_dir \
     --n_process 24 \
-    --add_run_info 'training something to have some sort of baseline with 10 percent of the data.
-     medium learning rate of 4e-3. Bigger Bert Model of 4 (BERT mini).'
+    --should_continue \
+    --add_run_info 'Trying out crashing during training and restarting.
+     medium learning rate of 8e-3. Bert tiny used here'

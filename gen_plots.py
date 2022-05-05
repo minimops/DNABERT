@@ -1,58 +1,59 @@
-import numpy as np
+import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
-import torch
-import re
-
-# TODO this plotting stuff seems to not work at all on remote
+import os
 
 
-def create_loss_dict(model_path, metric, finetune=False):
+# function that reads eval_results and makes a pandas.df out of it
+def create_metric_df(paths):
+    dfs = []
+    for p in paths:
+        try:
+            eval_path = p + "/eval_results.csv"
+            runid = p.rsplit("/", 1)[1]
+            df = pd.read_csv(eval_path, header=0)
+            df["type"] = runid
+            dfs.append(df)
+        except FileNotFoundError as e:
+            print(e)
+            print("No eval file in dir %s" % p)
+            print("Skipping this run.")
+            continue
 
-    if finetune:
-        # TODO
-        # placeholder
-        return None
-    else:
-        if metric not in ['perplexity', 'eval_loss']:
-            raise ValueError('Incompatible metric')
-        tr_args = vars(torch.load(model_path + '/training_args.bin'))
-        steps = range(0, tr_args.get('max_steps') + 1, tr_args.get('logging_steps'))
-        with open(model_path + '/eval_results.txt', 'r') as f:
-            res = f.readlines()
-        # only keep lines with desired metric
-        res_nums = []
-        for r in res:
-            if r. startswith(metric):
-                # remove '\n'
-                # remove beginning word
-                res_nums.append(float(re.sub('^' + metric + ' = ', '', r.strip())))
-        return dict(zip(steps, res_nums))
+    return pd.concat(dfs).reset_index()
 
 
-def plot_pt_loss(path, losses:dict, color='b'):
-    plt.plot(losses.keys(), losses.values(), color, label='Training loss')
-    plt.title('Pretraining Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
+# function that creates a seaborn line plot metriv vs global_step
+# and saves it to path as png
+def plot_measure(data: pd.DataFrame, pl_metric, path=None, zero_xlim=True):
+    if pl_metric not in data.columns:
+        raise ValueError("Desired Metric %s not supplied in data." % pl_metric)
+
+    sns.set_theme()
+    sns.set_style("whitegrid")
+    x = sns.relplot(
+        data=data,
+        kind="line",
+        x="global_step",
+        y=pl_metric,
+        hue="type"
+    )
+    if zero_xlim:
+            x.set(ylim=0)
     plt.show()
-    # plt.savefig(path + '/pt_loss_plot.png')
+    if path is not None:
+        plt.savefig(path)
 
 
-def plot_ft_loss(path, tr_losses:dict, val_losses:dict, colors=None):
-    if colors is None:
-        colors = ['b', 'g']
-    plt.plot(tr_losses.keys(), tr_losses.values(), colors[0], label='Training loss')
-    plt.plot(val_losses.keys(), val_losses.values(), colors[1], label='Validation loss')
-    plt.title('Training and Validation loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.show()
-    # plt.savefig(path + '/pt_loss_plot.png')
+# Usage
+pt_runs = ["Test_runs/" + x for x in os.listdir("Test_runs") if x.startswith("pt")]
+training_metrics_pt = create_metric_df(pt_runs)
+plot_measure(training_metrics_pt, "eval_loss", "plots/pt_first_tests_1_percent_eval_loss.png")
+plot_measure(training_metrics_pt, "perplexity", "plots/pt_first_tests_1_percent_perplexity.png")
 
+ft_runs = ["Test_runs/" + x for x in os.listdir("Test_runs") if x.startswith("ft")]
+training_metrics_ft = create_metric_df(ft_runs)
 
-# Usage example
-# plot_pt_loss('DNABERT/examples/output_viral_test6', create_loss_dict('DNABERT/examples/output_viral_test6'))
+for metric in training_metrics_ft.columns[2:]:
+    plot_measure(training_metrics_ft, metric, "plots/ft_first_tests_1_percent_%s.png" % metric, False)
 
-# create_loss_dict('DNABERT/examples/output_viral_test2_6', 'eval_loss')

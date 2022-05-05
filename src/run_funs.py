@@ -34,9 +34,13 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
 
     # get current time
     time_of_start = datetime.now().strftime("%d-%b-%Y (%H:%M:%S)")
-
+    if os.path.exists(path + '/info_run.txt'):
+        filename = path + '/info_run2.txt'
+        add_info = add_info + "\n continuing run"
+    else:
+        filename = path + '/info_run.txt'
     # create text file and write
-    with open(path + '/info_run.txt', 'w+') as f:
+    with open(filename, 'w+') as f:
         f.write('Info file \n')
         f.write('VIR-DNABERT ' + phase + '\n\n')
         f.write('Run start time: ' + time_of_start + '\n')
@@ -54,7 +58,7 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
             f.write('\npretrained Model dir: ' + model_dir + '\n')
             f.write('Model dir last modified: ' +
                     datetime.fromtimestamp(os.stat(model_dir).st_mtime).strftime('%Y-%m-%d-%H:%M') + '\n')
-    print('Created info file at ' + path + '/info_run.txt')
+    print('Created info file at ' + filename)
 
 
 # fills in training end time and runtime at the end of training
