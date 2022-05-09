@@ -41,18 +41,19 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
         filename = path + '/info_run.txt'
     # create text file and write
     with open(filename, 'w+') as f:
-        f.write('Info file \n')
-        f.write('VIR-DNABERT ' + phase + '\n\n')
-        f.write('Run start time: ' + time_of_start + '\n')
-        f.write('Run end time: ' + '\n\n')
-        f.write('GPU used: ' + gpu_name + '\n')
-        f.write(gpu_props + '\n\n')
-        f.write('Data used: ' + data_path + '\n')
-        f.write('last modified: ' + lm_data + '\n')
-        f.write('data description:\n')
-        f.write(''.join([str(i) for i in dat_info[1:]]))
-        f.write('\n')
-        f.write(add_info + '\n')
+        f.writelines(['Info file\n',
+                      'VIR-DNABERT ' + phase + '\n\n',
+                      'Run start time: ' + time_of_start + '\n',
+                      'Run end time: ' + '\n\n',
+                      'GPU used: ' + gpu_name + '\n',
+                      gpu_props + '\n',
+                      'Data used: ' + data_path + "\n",
+                      'last modified: ' + lm_data + '\n',
+                      'data description: \n',
+                      ''.join([str(i) for i in dat_info[1:]]),
+                      '\n',
+                      add_info + '\n'
+                      ])
 
         if phase == 'finetuning':
             f.write('\npretrained Model dir: ' + model_dir + '\n')
@@ -64,14 +65,25 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
 # fills in training end time and runtime at the end of training
 # also to be called when interrupted or errored out
 def complete_run_info_file(path, msg=None):
-    for line in fileinput.input(path + '/info_run.txt', inplace=True):
+    if os.path.exists(path + '/info_run2.txt'):
+        f_path = path + '/info_run2.txt'
+    else:
+        f_path = path + '/info_run.txt'
+    for line in fileinput.input(f_path, inplace=True):
         if line.strip().startswith('Run end time'):
             line = 'Run end time: ' + datetime.now().strftime("%d-%b-%Y (%H:%M:%S)") + '\n'
         sys.stdout.write(line)
     if msg is not None:
-        with open(path + '/info_run.txt', 'a') as f:
+        with open(f_path, 'a') as f:
             f.write('\nMessage: ' + msg + '\n')
-    print('Completed info file at ' + path + '/info_run.txt')
+    if os.path.exists(path + "/training_args.bin"):
+        # training args
+        tr_args = str(vars(torch.load(path + "/training_args.bin")))
+
+        with open(path + "/info_run.txt", 'a') as f:
+            f.write('Training arguments:')
+            f.write(str(tr_args))
+    print('Completed info file at ' + f_path)
 
 
 # usage:
@@ -99,5 +111,3 @@ def create_data_info_file(path, info):
         f.write('\n'.join(str(i) for i in info))
         f.write('\n')
     print('Created Data Info file at ' + path + '/data_info.txt')
-
-

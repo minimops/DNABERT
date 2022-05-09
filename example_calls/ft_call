@@ -3,7 +3,7 @@ cd examples
             export KMER=6
             export MODEL_PATH=../Test_runs/pt_1_percent
             export DATA_PATH=../created_data/ft_1_percent
-            export OUTPUT_PATH=../Test_runs/ft_crashing_and_restarting
+            export OUTPUT_PATH=../Test_runs/ft_1_percent_new_changes
 
             python run_finetune.py \
                 --model_type dna \
@@ -14,19 +14,17 @@ cd examples
                 --do_eval \
                 --data_dir $DATA_PATH \
                 --max_seq_length 150 \
-                --per_gpu_eval_batch_size=800   \
-                --per_gpu_train_batch_size=800   \
-                --learning_rate 4e-4 \
-                --num_train_epochs 5.0 \
+                --per_gpu_eval_batch_size=2200  \
+                --per_gpu_train_batch_size=2200   \
+                --learning_rate 4e-3 \
+                --num_train_epochs 10.0 \
                 --output_dir $OUTPUT_PATH \
                 --evaluate_during_training \
-                --logging_steps 300 \
-                --save_steps 200 \
+                --logging_steps 100 \
+                --save_steps 100 \
                 --warmup_percent 0.1 \
                 --hidden_dropout_prob 0.1 \
                 --overwrite_output \
                 --weight_decay 0.01 \
                 --n_process 8 \
-                --add_run_info 'finetuning the 1percent pt model with the same 1 percent data for finetuning.
-                like 8x amount of samples.
-                lower learning rate of 4e-4 and downsampled evaluate dataset. Crashing and restarting trial'
+                --add_run_info 'First ft run after changes made'

@@ -347,6 +347,14 @@ def train(args, train_dataset, model, tokenizer):
                     for key, value in logs.items():
                         tb_writer.add_scalar(key, value, global_step)
                     print(json.dumps({**logs, **{"step": global_step}}))
+                    # write the same into a file
+                    if not os.path.exists(args.output_dir + "/tr_args.csv"):
+                        headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
+                    else:
+                        headers = ""
+                    with open(args.output_dir + "/tr_args.csv", "a") as writer:
+                        writer.write(headers + ",".join(
+                            str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
                 if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
                     if args.task_name == "dna690" and results["auc"] < best_auc:
@@ -404,6 +412,10 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
         # Note that DistributedSampler samples randomly
         eval_sampler = SequentialSampler(eval_dataset)
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
+
+        # test to see if subsampling occurs
+        logger.info("Nrow of 'eval_dataset' %s" % len(eval_dataset))
+        logger.info("DataLoader %s" % str(eval_dataloader))
 
         # multi-gpu eval
         if args.n_gpu > 1 and not isinstance(model, torch.nn.DataParallel):
@@ -1048,8 +1060,13 @@ def main():
         args.n_gpu = 1
     args.device = device
 
+    # Create output directory if needed
+    if args.local_rank in [-1, 0]:
+        os.makedirs(args.output_dir, exist_ok=True)
     # Setup logging
     logging.basicConfig(
+        filename=args.output_dir + "/training.log",
+        filemode="w+",
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN,
@@ -1064,11 +1081,12 @@ def main():
     )
 
     # insert info file creation
-    # Create output directory if needed
-    if args.local_rank in [-1, 0]:
-        os.makedirs(args.output_dir, exist_ok=True)
     create_run_info_file(data_path=args.data_dir, path=args.output_dir,
                          add_info=args.add_run_info, phase='finetuning', model_dir=args.model_name_or_path)
+    # complete info file with timestamp
+    # maybe use this here?:
+    # https://stackoverflow.com/questions/9741351/how-to-find-exit-code-or-reason-when-atexit-callback-is-called-in-python
+    atexit.register(complete_run_info_file, path=args.output_dir, msg=None)
 
     # Set seed
     set_seed(args)
@@ -1306,14 +1324,7 @@ def main():
         ensemble_results = compute_metrics(eval_task, all_preds, out_label_ids, all_probs[:,1])
         logger.info("***** Ensemble results {} *****".format(prefix))
         for key in sorted(ensemble_results.keys()):
-            logger.info("  %s = %s", key, str(ensemble_results[key]))    
-
-
-
-    # TODO this position means it will run at the end of training?
-    # maybe use this here?:
-    # https://stackoverflow.com/questions/9741351/how-to-find-exit-code-or-reason-when-atexit-callback-is-called-in-python
-    atexit.register(complete_run_info_file, path=args.output_dir, msg=None)
+            logger.info("  %s = %s", key, str(ensemble_results[key]))
 
 
     return results

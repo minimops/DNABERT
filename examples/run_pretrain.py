@@ -781,6 +781,8 @@ def main():
 
     # Setup logging
     logging.basicConfig(
+        filename=args.output_dir + "/training.log",
+        filemode="w",
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN,
@@ -800,6 +802,10 @@ def main():
         os.makedirs(args.output_dir, exist_ok=True)
     create_run_info_file(data_path=args.train_data_file, path=args.output_dir,
                          add_info=args.add_run_info)
+    # info file completetion with timestamp
+    # maybe use this here?:
+    # https://stackoverflow.com/questions/9741351/how-to-find-exit-code-or-reason-when-atexit-callback-is-called-in-python
+    atexit.register(complete_run_info_file, path=args.output_dir, msg=None)
 
     # Set seed
     set_seed(args)
@@ -910,11 +916,6 @@ def main():
             result = evaluate(args, global_step, model, tokenizer, prefix=prefix)
             result = dict((k + "_{}".format(global_step), v) for k, v in result.items())
             results.update(result)
-
-    # TODO this position means it will run at the end of training?
-    # maybe use this here?:
-    # https://stackoverflow.com/questions/9741351/how-to-find-exit-code-or-reason-when-atexit-callback-is-called-in-python
-    atexit.register(complete_run_info_file, path=args.output_dir, msg=None)
 
     return results
 
