@@ -574,7 +574,9 @@ def evaluate(args, global_step, model: PreTrainedModel, tokenizer: PreTrainedTok
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(float(result[key])))
             # writer.write(str(float(perplexity)) + "\n")
-            writer.write("%.8f," % float(result[key]))
+            eval_result = eval_result + ("%.8f" % result[key])
+            if key is not sorted(result.keys())[-1]:
+                eval_result = eval_result + ","
         writer.write("\n")
     return result
 
@@ -779,10 +781,13 @@ def main():
         args.n_gpu = 1
     args.device = device
 
+    # Create output directory if needed
+    if args.local_rank in [-1, 0]:
+        os.makedirs(args.output_dir, exist_ok=True)
     # Setup logging
     logging.basicConfig(
         filename=args.output_dir + "/training.log",
-        filemode="w",
+        filemode="w+",
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         level=logging.INFO if args.local_rank in [-1, 0] else logging.WARN,

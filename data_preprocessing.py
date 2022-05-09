@@ -6,7 +6,7 @@ from statistics import mean, median
 import os
 from math import ceil
 from motif.motif_utils import seq2kmer
-from run_funs import create_dir, create_data_info_file
+from src.run_funs import create_dir, create_data_info_file
 
 
 # converts a directory of fasta files into a list of strings
@@ -122,14 +122,6 @@ def removeNAseq_ft(seqList):
     return seqList
 
 
-# returns 'amt' number of random sequences of a list
-def sampleSeqs(seqList, amt: int):
-    # if amt not in range(0, len(seqList)):
-    #     raise ValueError('amt needs to be smaller than the input length')
-    random.shuffle(seqList)
-    return seqList[:amt]
-
-
 def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510, rat_max=.5):
     location = create_dir(name, path)
     lines = []
@@ -176,11 +168,18 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
     create_data_info_file(location, lines)
 
 
-def ft_df_creation(class_dirs, cap, cutlength, kmer):
+def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1):
     cl_df_list = []
     label_iter = 0
     # just to count left out sequences
     lo_counter_list = []
+
+    def cutting_fun(aseq, max_amt, min_amt=None, replace=False):
+        last_possible_cut = len(aseq) - cutlength + 1
+        if min_amt is None:
+            min_amt = last_possible_cut
+        starts_sam = numpy.random.choice(last_possible_cut, min(int(min_amt), int(max_amt)), replace=replace)
+        return [aseq[i:i + cutlength] for i in starts_sam]
 
     for c in class_dirs:
         split_seq_list = []
@@ -190,20 +189,47 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer):
         # for every fasta file:
         for los in list_seqs:
             sam_list = []
+            rem_seq = []
             # for every sequence in file
             for seq in los:
                 if len(seq) <= cutlength:
                     print("left out a seq because of seq length of: " + str(len(seq)))
+                    rem_seq.append(seq)
                     lo_counter += 1
                     continue
-                last_possible_cut = len(seq) - cutlength + 1
-                starts_sam = numpy.random.choice(last_possible_cut, min(last_possible_cut, cap), replace=False)
-                sam_list.extend([seq[i:i + cutlength] for i in starts_sam])
+                sam_list.extend(cutting_fun(seq, cap))
+
+            # TODO this removing by value seems rather dumb here, not sure of a better fix rn
+            # remove too short seqs
+            for r in rem_seq:
+                los.remove(r)
+
+            # if we are underneath the cap
+            # done this complex way to maximize diversity
+            if len(sam_list) < cap and max_mult > 1:
+                orig_sam_len = len(sam_list)
+                if len(los) > 1:
+                    cut_p_seq = (cap - len(sam_list)) / (len(los) * 5)
+                    # while we are underneath cap or underneath max_mult
+                    while len(sam_list) < cap:
+                        if len(sam_list) / orig_sam_len > max_mult:
+                            break
+                        # choose seq at random
+                        seq = los[numpy.random.randint(0, len(los))]
+                        # cut x amt of subseqs at random and add to list
+                        sam_list.extend(cutting_fun(seq, cut_p_seq))
+                elif len(los) == 1:
+                    seq = los[0]
+                    # cut x amt of subseqs at random and add to list
+                    sam_list.extend(cutting_fun(seq, cap, min(cap - len(sam_list), orig_sam_len * (max_mult - 1)),
+                                                replace=True))
+
             # sample elements of lists to match cap
             # this is done for files with multiple sequences longer than cutlength + cap
             if len(sam_list) > cap:
                 sam_list = random.sample(sam_list, cap)
             split_seq_list.extend(sam_list)
+
         # create kmers
         split_seq_kmer_list = list2kmer(split_seq_list, kmer)
         # create df
@@ -218,7 +244,7 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer):
     return full_df, lo_counter_list
 
 
-def ft_data_process(dirlists, name, path, cap, cutlength, kmer, add_info='', labels=None):
+def ft_data_process(dirlists, name, path, cap, cutlength, kmer, add_info='', labels=None, max_mult=1):
     # TODO missing assert str and len of dirList
     # create dir
     location = create_dir(name, path)
@@ -235,9 +261,12 @@ def ft_data_process(dirlists, name, path, cap, cutlength, kmer, add_info='', lab
     filenameList = ['dev', 'train']
     # TODO length check here between filenameList and dirlists
     for i in range(len(dirlists)):
+        # TODO temp insert to stop creating evaluate file simultaniously
+        if i == 0 and len(dirlists) == 2:
+            continue
         # write train/test file
         ft_pd, lo_counter = ft_df_creation(class_dirs=dirlists[i], cap=cap, cutlength=cutlength,
-                                           kmer=kmer)
+                                           kmer=kmer, max_mult=max_mult)
         ft_pd.to_csv(location + "/" + filenameList[i] + ".tsv", sep='\t', index=False)
         lines.extend(["%s file:" % (filenameList[i]),
                       "Left out sequences due to length: %s of classes %s"
