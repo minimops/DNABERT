@@ -244,39 +244,44 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1):
     return full_df, lo_counter_list
 
 
-def ft_data_process(dirlists, name, path, cap, cutlength, kmer, add_info='', labels=None, max_mult=1):
+def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1):
     # TODO missing assert str and len of dirList
+    possible_names = ["train", "dev", "validation", "test"]
+    if filetype not in possible_names:
+        raise ValueError("filetype must be one of the following %s" % ", ".join(possible_names))
+    if filetype == "validation":
+        filetype = "dev"
     # create dir
-    location = create_dir(name, path)
-    lines = ["Data from dirs: " + str(list(map(', '.join, dirlists))),
+    if os.path.exists(path + "/" + name):
+        location = path + "/" + name
+        if os.path.exists(location + "/" + filetype + ".tsv"):
+            raise ValueError("Dir %s already exists and %s data file within it. Delete beforehand"
+                             % (location, filetype + ".tsv"))
+        print("Warning: %s already exists, will insert data file into it, append the info file." % location)
+    else:
+        location = create_dir(name, path)
+    lines = ["Data from dirs: " + ', '.join(dirlist),
              "Cut length: " + str(cutlength),
              "Kmer: " + str(kmer),
-             "cap: %s" % cap,
-             "\n"
-             ]
+             "cap: %s" % cap
+            ]
     if labels is not None:
         lines.append("labels %s are %s" % (labels if labels is not None else '',
                                            list(range(len(labels)))))
-    # for test and train dirlists
-    filenameList = ['dev', 'train']
-    # TODO length check here between filenameList and dirlists
-    for i in range(len(dirlists)):
-        # TODO temp insert to stop creating evaluate file simultaniously
-        if i == 0 and len(dirlists) == 2:
-            continue
-        # write train/test file
-        ft_pd, lo_counter = ft_df_creation(class_dirs=dirlists[i], cap=cap, cutlength=cutlength,
-                                           kmer=kmer, max_mult=max_mult)
-        ft_pd.to_csv(location + "/" + filenameList[i] + ".tsv", sep='\t', index=False)
-        lines.extend(["%s file:" % (filenameList[i]),
-                      "Left out sequences due to length: %s of classes %s"
-                      % (", ".join([str(x) for x in lo_counter]),
-                         ", ".join(
-                             [str(y) for y in (
-                                 labels if labels is not None else numpy.arange(len(dirlists[i])))])),
-                      "Number of %s sub-sequences: %s" % (filenameList[i], str(len(ft_pd.index))),
-                      "By class count: \n%s" % (str(ft_pd['label'].value_counts())),
-                      "\n"])
+    lines.append(add_info + "\n")
+
+    # write train/test file
+    ft_pd, lo_counter = ft_df_creation(class_dirs=dirlist, cap=cap, cutlength=cutlength,
+                                       kmer=kmer, max_mult=max_mult)
+    ft_pd.to_csv(location + "/" + filetype + ".tsv", sep='\t', index=False)
+    lines.extend(["%s file:" % filetype,
+                  "Left out sequences due to length: %s of classes %s"
+                  % (", ".join([str(x) for x in lo_counter]),
+                     ", ".join(
+                         [str(y) for y in (
+                             labels if labels is not None else numpy.arange(len(dirlist)))])),
+                  "Number of %s sub-sequences: %s" % (filetype, str(len(ft_pd.index))),
+                  "By class count: \n%s" % (str(ft_pd['label'].value_counts())),
+                  "\n"])
     # write info file
-    lines.append(add_info)
     create_data_info_file(location, lines)

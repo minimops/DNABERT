@@ -3,6 +3,7 @@ import os
 import torch
 import sys
 import fileinput
+import re
 
 
 # creating funs to run pretraining and capturing important information
@@ -34,11 +35,13 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
 
     # get current time
     time_of_start = datetime.now().strftime("%d-%b-%Y (%H:%M:%S)")
-    if os.path.exists(path + '/info_run.txt'):
-        filename = path + '/info_run2.txt'
-        add_info = add_info + "\n continuing run"
-    else:
-        filename = path + '/info_run.txt'
+
+    f_name = '/info_run'
+    while os.path.exists(path + f_name + '.txt'):
+        num = re.findall(r"\d+", f_name)
+        f_name = re.split(r"\d+", f_name)[0] + str((int(num[0]) + 1) if len(num) > 0 else 2)
+
+    filename = path + f_name + '.txt'
     # create text file and write
     with open(filename, 'w+') as f:
         f.writelines(['Info file\n',
@@ -65,10 +68,15 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
 # fills in training end time and runtime at the end of training
 # also to be called when interrupted or errored out
 def complete_run_info_file(path, msg=None):
-    if os.path.exists(path + '/info_run2.txt'):
-        f_path = path + '/info_run2.txt'
-    else:
+    f_list = 0
+    for file in os.listdir(path):
+        if re.search("_run(\d+)", file):
+            f_list = max(int(re.findall("\d+", file)[0]), f_list)
+    if f_list == 0:
         f_path = path + '/info_run.txt'
+    else:
+        f_path = path + '/info_run' + str(f_list) + '.txt'
+
     for line in fileinput.input(f_path, inplace=True):
         if line.strip().startswith('Run end time'):
             line = 'Run end time: ' + datetime.now().strftime("%d-%b-%Y (%H:%M:%S)") + '\n'
@@ -105,8 +113,11 @@ def create_dir(name, path=''):
 def create_data_info_file(path, info):
     # create text file and write
     dateT = datetime.now()
-    with open(path + '/data_info.txt', 'w') as f:
-        f.write('Data Info file \n')
+    nl = ""
+    if os.path.exists(path + '/data_info.txt'):
+        nl = "\n\n"
+    with open(path + '/data_info.txt', 'a') as f:
+        f.write('%sData Info \n' % nl)
         f.write(str('Created:' + str(dateT.strftime("%d-%b-%Y (%H:%M:%S)")) + '\n'))
         f.write('\n'.join(str(i) for i in info))
         f.write('\n')

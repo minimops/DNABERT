@@ -1,9 +1,7 @@
-cd examples
-
             export KMER=6
-            export MODEL_PATH=../Test_runs/pt_bmi_10per
-            export DATA_PATH=../created_data/ft_10_percent
-            export OUTPUT_PATH=../Test_runs/ft_10_percent
+            export MODEL_PATH=../Test_runs/pt_1_percent
+            export DATA_PATH=../created_data/ft_1_percent
+            export OUTPUT_PATH=../Test_runs/ft_testing_info_file
 
             python run_finetune.py \
                 --model_type dna \
@@ -14,17 +12,17 @@ cd examples
                 --do_eval \
                 --data_dir $DATA_PATH \
                 --max_seq_length 150 \
-                --per_gpu_eval_batch_size=400  \
-                --per_gpu_train_batch_size=600   \
+                --per_gpu_eval_batch_size=2000  \
+                --per_gpu_train_batch_size=2000   \
                 --learning_rate 4e-3 \
-                --num_train_epochs 5.0 \
+                --num_train_epochs 1.0 \
                 --output_dir $OUTPUT_PATH \
                 --evaluate_during_training \
-                --logging_steps 1000 \
-                --save_steps 5000 \
+                --logging_steps 200 \
+                --save_steps 200 \
                 --warmup_percent 0.1 \
                 --hidden_dropout_prob 0.1 \
                 --overwrite_output \
                 --weight_decay 0.01 \
                 --n_process 20 \
-                --add_run_info 'ft run with 10percent models, bert mini'
+                --add_run_info 'testing'
