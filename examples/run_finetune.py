@@ -773,7 +773,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
         else:
             n_proc = int(args.n_process)
             if evaluate:
-                n_proc = max(int(n_proc/4),1)
+                n_proc = max(int(n_proc/2),1)
             print("number of processes for converting feature: " + str(n_proc))
             p = Pool(n_proc)
             indexes = [0]

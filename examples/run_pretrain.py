@@ -472,6 +472,16 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
                             tb_writer.add_scalar("eval_{}".format(key), value, global_step)
                     tb_writer.add_scalar("lr", scheduler.get_lr()[0], global_step)
                     tb_writer.add_scalar("loss", (tr_loss - logging_loss) / args.logging_steps, global_step)
+                    logger.info("loss in tb_writer: %s" % ((tr_loss - logging_loss) / args.logging_steps))
+
+                    if not os.path.exists(args.output_dir + "/tr_args.csv"):
+                        headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
+                    else:
+                        headers = ""
+                    with open(args.output_dir + "/tr_args.csv", "a") as writer:
+                        writer.write(headers + ",".join(
+                            str(x) for x in [global_step, scheduler.get_last_lr(), ((tr_loss - logging_loss) / args.logging_steps)]) + "\n")
+
                     logging_loss = tr_loss
 
                 if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
@@ -503,6 +513,9 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
 
     if args.local_rank in [-1, 0]:
         tb_writer.close()
+
+    logger.info("tr_loss and end: %s" % tr_loss)
+    logger.info("tr_loss / global_step at end: %d" % (tr_loss / global_step))
 
     return global_step, tr_loss / global_step
 
@@ -571,6 +584,7 @@ def evaluate(args, global_step, model: PreTrainedModel, tokenizer: PreTrainedTok
             writer.write(headers + "\n")
         logger.info("***** Eval results {} *****".format(prefix))
         writer.write(str(global_step) + ",")
+        eval_result = ""
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(float(result[key])))
             # writer.write(str(float(perplexity)) + "\n")
