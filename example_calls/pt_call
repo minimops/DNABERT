@@ -7,10 +7,10 @@ export SOURCE=../
 export OUTPUT_PATH=../Test_runs/pt_testing_losses_2
 
 export KMER=6
-export TRAIN_FILE=sample_data/pre/6_3k.txt
-export TEST_FILE=sample_data/pre/6_3k.txt
+export TRAIN_FILE=$PROJECT/created_data/pt_10_percent/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_10_percent/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=../Test_runs/testing
+export OUTPUT_PATH=../Test_runs/testing_bert_mini_10percent
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
