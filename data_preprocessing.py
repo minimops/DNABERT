@@ -60,11 +60,12 @@ def split_sequences_no(seq_list, low_b=5, upp_b=510, rat_max=.5):
 # TODO
 #  for now this takes the expected amt of samples as direct splitting creates as a guide for the amount of samples
 #  to create per sequence (so individually adjusted for each seq length)
-def split_sequences_rand(seq_list, low_b=5, upp_b=510, rat_max=.5):
+def split_sequences_rand(seq_list, low_b=5, upp_b=510, rat_max=.5, ratio=1):
     split_seq_list = []
 
     # expected average seq length
     expL = ((((upp_b - low_b) / 2) * (1 - rat_max)) + upp_b * rat_max)
+    expL *= ratio
     # for each sequence
     for seq in seq_list:
         if len(seq) < low_b:
@@ -122,7 +123,14 @@ def removeNAseq_ft(seqList):
     return seqList
 
 
-def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510, rat_max=.5):
+def seq_sub_sample(d1, d2, perc):
+    seqs = []
+    for d in [d1, d2]:
+        seqs.append(numpy.array(d)[numpy.random.choice(len(d), int(perc * len(d)), replace=False)])
+    return list(seqs[0]), list(seqs[1])
+
+
+def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510, rat_max=.5, ratio=1, perc=None):
     location = create_dir(name, path)
     lines = []
     split_seqs_both = []
@@ -130,7 +138,9 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
     for d in dirs_list:
         seqs = removeNAseq(parse_fasta(d))
         n_o_cut = split_sequences_no(seqs, low_b, upp_b, rat_max)
-        samp_cut = split_sequences_rand(seqs, low_b, upp_b, rat_max)
+        samp_cut = split_sequences_rand(seqs, low_b, upp_b, rat_max, ratio)
+        if perc is not None:
+            n_o_cut, samp_cut = seq_sub_sample(n_o_cut, samp_cut, perc)
         split_seqs_both.extend(n_o_cut)
         split_seqs_both.extend(samp_cut)
 
@@ -263,7 +273,8 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
     lines = ["Data from dirs: " + ', '.join(dirlist),
              "Cut length: " + str(cutlength),
              "Kmer: " + str(kmer),
-             "cap: %s" % cap
+             "cap: %s" % cap,
+             "max_mult: %s" % max_mult
             ]
     if labels is not None:
         lines.append("labels %s are %s" % (labels if labels is not None else '',

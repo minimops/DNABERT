@@ -1,6 +1,6 @@
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+    import seaborn as sns
+    import matplotlib.pyplot as plt
 import os
 
 
@@ -87,9 +87,9 @@ def plot_losses(data: pd.DataFrame, cols, path=None, zero_xlim=True):
 #     plot_measure(training_metrics_ft, metric, "plots/ft_first_tests_1_percent_%s.png" % metric, False)
 #
 # # testing plotting both training and eval loss
-# plot_losses(create_metric_df(["Test_runs/ft_1_percent_new_changes"]), ["training_loss", "eval_loss"])
+plot_losses(create_metric_df(["Test_runs/ft_bb_1per_lowLR"]), ["training_loss", "eval_loss"])
 #
-# data = create_metric_df(["Test_runs/pt_bmi_10per"], tr_type="pt")
-# plot_measure(data, "eval_loss")
+data = create_metric_df(["Test_runs/pt_bmi_10per"], tr_type="pt")
+plot_measure(data, "eval_loss")
 #
 # cols = ["training_loss", "eval_loss"]

@@ -18,7 +18,7 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
 
     # gpu info
     gpu_name = torch.cuda.get_device_name()
-    gpu_props = str(torch.cuda.get_device_properties(torch.cuda.device))
+    gpu_props = "" # str(torch.cuda.get_device_properties(torch.cuda.device))
 
     # get data info text file text
     # might be one up

@@ -1,10 +1,16 @@
 cd examples
 
 export KMER=6
-export TRAIN_FILE=../created_data/pt_10_percent/full_kmers.txt
-export TEST_FILE=../created_data/pt_10_percent/full_kmers.txt
+export TRAIN_FILE=../created_data/pt_1_percent/full_kmers.txt
+export TEST_FILE=../created_data/pt_1_percent/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=../Test_runs/pt_bmi_10per
+export OUTPUT_PATH=../Test_runs/pt_testing_losses_2
+
+export KMER=6
+export TRAIN_FILE=sample_data/pre/6_3k.txt
+export TEST_FILE=sample_data/pre/6_3k.txt
+export SOURCE=../
+export OUTPUT_PATH=../Test_runs/testing
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
@@ -16,12 +22,12 @@ python run_pretrain.py \
     --do_eval \
     --eval_data_file=$TEST_FILE \
     --mlm \
-    --gradient_accumulation_steps 25 \
-    --per_gpu_train_batch_size 78 \
-    --per_gpu_eval_batch_size 35 \
-    --save_steps 300 \
+    --gradient_accumulation_steps 5 \
+    --per_gpu_train_batch_size 500 \
+    --per_gpu_eval_batch_size 500 \
+    --save_steps 100 \
     --save_total_limit 30 \
-    --max_steps 1500 \
+    --max_steps 500 \
     --evaluate_during_training \
     --logging_steps 100 \
     --line_by_line \
@@ -32,7 +38,7 @@ python run_pretrain.py \
     --beta1 0.9 \
     --beta2 0.98 \
     --mlm_probability 0.025 \
-    --warmup_steps 300 \
+    --warmup_steps 100 \
     --overwrite_output_dir \
     --n_process 24 \
-    --add_run_info 'BERT mini with 10 percent of the data med learingn rate of 4e-3'
+    --add_run_info 'just testing'
