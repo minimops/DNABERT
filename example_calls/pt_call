@@ -7,29 +7,29 @@ export SOURCE=../
 export OUTPUT_PATH=../Test_runs/pt_testing_losses_2
 
 export KMER=6
-export TRAIN_FILE=$PROJECT/created_data/pt_10_percent/full_kmers.txt
-export TEST_FILE=$PROJECT/created_data/pt_10_percent/full_kmers.txt
+export TRAIN_FILE=$PROJECT/created_data/pt_10_train/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_10_eval/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=../Test_runs/testing_bert_mini_10percent
+export OUTPUT_PATH=../Test_runs/pt_mini_10_r1
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
     --model_type=dna \
     --tokenizer_name=dna$KMER \
-    --config_name=$SOURCE/configs/config_b_mini.json \
+    --config_name=$SOURCE/src/transformers/dnabert-config/bert-config-$KMER/config.json \
     --do_train \
     --train_data_file=$TRAIN_FILE \
     --do_eval \
     --eval_data_file=$TEST_FILE \
     --mlm \
     --gradient_accumulation_steps 5 \
-    --per_gpu_train_batch_size 500 \
-    --per_gpu_eval_batch_size 500 \
-    --save_steps 100 \
+    --per_gpu_train_batch_size 340 \
+    --per_gpu_eval_batch_size 280 \
+    --save_steps 200 \
     --save_total_limit 30 \
-    --max_steps 500 \
+    --max_steps 2000 \
     --evaluate_during_training \
-    --logging_steps 50 \
+    --logging_steps 100 \
     --line_by_line \
     --learning_rate 4e-3 \
     --block_size 512 \
@@ -38,7 +38,7 @@ python run_pretrain.py \
     --beta1 0.9 \
     --beta2 0.98 \
     --mlm_probability 0.025 \
-    --warmup_steps 100 \
+    --warmup_steps 300 \
     --overwrite_output_dir \
     --n_process 24 \
-    --add_run_info 'just testing'
+    --add_run_info 'pt with 10percent train data and learning rate of 4e-3, 1.9GB file'

@@ -65,14 +65,13 @@ def split_sequences_rand(seq_list, low_b=5, upp_b=510, rat_max=.5, ratio=1):
 
     # expected average seq length
     expL = ((((upp_b - low_b) / 2) * (1 - rat_max)) + upp_b * rat_max)
-    expL *= ratio
     # for each sequence
     for seq in seq_list:
         if len(seq) < low_b:
             print("sequence skipped because of length < %s" % low_b)
             continue
         # ceiling here to create at least some for short seqs
-        amt = ceil(len(seq) / expL)
+        amt = ratio * ceil(len(seq) / expL)
         for i in range(amt):
             cutLength = sample_cut_length(low_b, min(upp_b, len(seq)), rat_max)
             # double plus one cuz of range and to include possibility of up to end
@@ -150,6 +149,7 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
                       "Average length of seq: " + str(mean(map(len, seqs))),
                       "Split into sequences of length: " + str(low_b) + " - " + str(upp_b),
                       "With bias probability to max len of: " + str(rat_max),
+                      "Sample ratio of: " + str(ratio),
                       "Number of non-overlap sub-seqs: " + str(len(n_o_cut)),
                       "Number of sampled sub-seqs: " + str(len(samp_cut)),
                       "Kmer: " + str(kmer)

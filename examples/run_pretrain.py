@@ -308,7 +308,7 @@ def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args) -> T
 def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedTokenizer) -> Tuple[int, float]:
     """ Train the model """
     if args.local_rank in [-1, 0]:
-        tb_writer = SummaryWriter()
+        tb_writer = SummaryWriter(log_dir=args.output_dir)
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
 
@@ -480,7 +480,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
                         headers = ""
                     with open(args.output_dir + "/tr_args.csv", "a") as writer:
                         writer.write(headers + ",".join(
-                            str(x) for x in [global_step, scheduler.get_last_lr(), ((tr_loss - logging_loss) / args.logging_steps)]) + "\n")
+                            str(x) for x in [global_step, scheduler.get_last_lr()[0], ((tr_loss - logging_loss) / args.logging_steps)]) + "\n")
 
                     logging_loss = tr_loss
 
@@ -591,7 +591,7 @@ def evaluate(args, global_step, model: PreTrainedModel, tokenizer: PreTrainedTok
             eval_result = eval_result + ("%.8f" % result[key])
             if key is not sorted(result.keys())[-1]:
                 eval_result = eval_result + ","
-        writer.write("\n")
+        writer.write(eval_result + "\n")
     return result
 
 
