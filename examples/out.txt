@@ -1,0 +1,22 @@
+Created info file at ../Test_runs/testing_bert_mini_10percent/info_run.txt
+============================================================
+<class 'transformers.tokenization_dna.DNATokenizer'>
+Traceback (most recent call last):
+  File "run_pretrain.py", line 943, in <module>
+    main()
+  File "run_pretrain.py", line 876, in main
+    model.to(args.device)
+  File "/home/ru85xoj2/miniconda2/envs/dnabert/lib/python3.6/site-packages/torch/nn/modules/module.py", line 425, in to
+    return self._apply(convert)
+  File "/home/ru85xoj2/miniconda2/envs/dnabert/lib/python3.6/site-packages/torch/nn/modules/module.py", line 201, in _apply
+    module._apply(fn)
+  File "/home/ru85xoj2/miniconda2/envs/dnabert/lib/python3.6/site-packages/torch/nn/modules/module.py", line 201, in _apply
+    module._apply(fn)
+  File "/home/ru85xoj2/miniconda2/envs/dnabert/lib/python3.6/site-packages/torch/nn/modules/module.py", line 201, in _apply
+    module._apply(fn)
+  File "/home/ru85xoj2/miniconda2/envs/dnabert/lib/python3.6/site-packages/torch/nn/modules/module.py", line 223, in _apply
+    param_applied = fn(param)
+  File "/home/ru85xoj2/miniconda2/envs/dnabert/lib/python3.6/site-packages/torch/nn/modules/module.py", line 423, in convert
+    return t.to(device, dtype if t.is_floating_point() else None, non_blocking)
+KeyboardInterrupt
+Completed info file at ../Test_runs/testing_bert_mini_10percent/info_run.txt
