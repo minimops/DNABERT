@@ -288,7 +288,11 @@ def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args) -> T
                     new_centers.add(current_index)
         new_centers = list(new_centers)
         masked_indices[i][new_centers] = True
-    
+
+    # testing masking
+    # with open(args.output_dir + "/mask_test.txt", "a") as f:
+    #     for i in masked_indices:
+    #         f.write("%s," % str(len(i.nonzero()) / len(i)))
 
     labels[~masked_indices] = -100  # We only compute loss on masked tokens
 
@@ -426,6 +430,10 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
             if steps_trained_in_current_epoch > 0:
                 steps_trained_in_current_epoch -= 1
                 continue
+
+            # change masking to be fluid
+            if args.mlm_step_value is not None and global_step == int(args.mlm_step_value):
+                args.mlm_probability = args.mlm_prob_step
 
             inputs, labels = mask_tokens(batch, tokenizer, args) if args.mlm else (batch, batch)
             # print(inputs.shape)
@@ -619,6 +627,19 @@ def main():
     )
 
     # Other parameters
+    parser.add_argument(
+        "--mlm_step_value",
+        default=None,
+        type=str,
+        help="An optional input to change the mlm prob at the input global step",
+    )
+    parser.add_argument(
+        "--mlm_prob_step",
+        default=None,
+        type=float,
+        help="An optional input what to change the mlm prob after desired mlm_step_value to",
+    )
+
     parser.add_argument(
         "--eval_data_file",
         default=None,

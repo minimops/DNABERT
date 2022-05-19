@@ -178,7 +178,7 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
     create_data_info_file(location, lines)
 
 
-def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1):
+def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None):
     cl_df_list = []
     label_iter = 0
     # just to count left out sequences
@@ -240,6 +240,13 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1):
                 sam_list = random.sample(sam_list, cap)
             split_seq_list.extend(sam_list)
 
+        if perc is not None:
+            if perc > 1:
+                raise ValueError("perc is ment to susample here, not oversample, please select a value lower than 1")
+            split_seq_list = list(numpy.array(split_seq_list)[numpy.random.choice(len(split_seq_list),
+                                                                                  int(perc * len(split_seq_list)),
+                                                                                  replace=False)])
+
         # create kmers
         split_seq_kmer_list = list2kmer(split_seq_list, kmer)
         # create df
@@ -254,7 +261,7 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1):
     return full_df, lo_counter_list
 
 
-def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1):
+def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1, perc=None):
     # TODO missing assert str and len of dirList
     possible_names = ["train", "dev", "validation", "test"]
     if filetype not in possible_names:
@@ -283,7 +290,7 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
 
     # write train/test file
     ft_pd, lo_counter = ft_df_creation(class_dirs=dirlist, cap=cap, cutlength=cutlength,
-                                       kmer=kmer, max_mult=max_mult)
+                                       kmer=kmer, max_mult=max_mult, perc=perc)
     ft_pd.to_csv(location + "/" + filetype + ".tsv", sep='\t', index=False)
     lines.extend(["%s file:" % filetype,
                   "Left out sequences due to length: %s of classes %s"

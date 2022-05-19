@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 
+
 # function that reads eval_results and makes a pandas.df out of it
 def create_metric_df(paths, tr_type="ft"):
     if tr_type not in ["ft", "pt"]:
@@ -72,6 +73,7 @@ def plot_losses(data: pd.DataFrame, cols, path=None, zero_xlim=True):
     plt.show()
     if path is not None:
         plt.savefig(path)
+
 
 
 # Usage
