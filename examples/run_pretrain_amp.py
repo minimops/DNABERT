@@ -68,7 +68,6 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
-
 from run_funs import create_run_info_file, complete_run_info_file
 
 try:
@@ -76,9 +75,7 @@ try:
 except ImportError:
     from tensorboardX import SummaryWriter
 
-
 logger = logging.getLogger(__name__)
-
 
 MODEL_CLASSES = {
     "gpt2": (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer),
@@ -94,11 +91,7 @@ MASK_LIST = {
     "3": [-1, 1],
     "4": [-1, 1, 2],
     "5": [-2, -1, 1, 2],
-    "6": [-2, -1, 1, 2, 3],
-    "7": [-3, -2, -1, 1, 2, 3],
-    "8": [-3, -2, -1, 1, 2, 3, 4],
-    "9": [-4, -3, -2, -1, 1, 2, 3, 4],
-    "10": [-4, -3, -2, -1, 1, 2, 3, 4, 5]
+    "6": [-2, -1, 1, 2, 3]
 }
 
 
@@ -127,7 +120,7 @@ class TextDataset(Dataset):
             tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
 
             for i in range(0, len(tokenized_text) - block_size + 1, block_size):  # Truncate in block of block_size
-                self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i : i + block_size]))
+                self.examples.append(tokenizer.build_inputs_with_special_tokens(tokenized_text[i: i + block_size]))
             # Note that we are loosing the last truncated example here for the sake of simplicity (no padding)
             # If your dataset is small, first you should loook for a bigger one :-) and second you
             # can change this behavior by adding (model specific) padding.
@@ -142,9 +135,12 @@ class TextDataset(Dataset):
     def __getitem__(self, item):
         return torch.tensor(self.examples[item], dtype=torch.long)
 
+
 def convert_line_to_example(tokenizer, lines, max_length, add_special_tokens=True):
-    examples = tokenizer.batch_encode_plus(lines, add_special_tokens=add_special_tokens, max_length=max_length)["input_ids"]
+    examples = tokenizer.batch_encode_plus(lines, add_special_tokens=add_special_tokens, max_length=max_length)[
+        "input_ids"]
     return examples
+
 
 class LineByLineTextDataset(Dataset):
     def __init__(self, tokenizer: PreTrainedTokenizer, args, file_path: str, block_size=512):
@@ -166,24 +162,26 @@ class LineByLineTextDataset(Dataset):
 
             with open(file_path, encoding="utf-8") as f:
                 lines = [line for line in f.read().splitlines() if (len(line) > 0 and not line.isspace())]
-            
+
             if args.n_process == 1:
-                self.examples = tokenizer.batch_encode_plus(lines, add_special_tokens=True, max_length=block_size)["input_ids"]
+                self.examples = tokenizer.batch_encode_plus(lines, add_special_tokens=True, max_length=block_size)[
+                    "input_ids"]
             else:
                 n_proc = args.n_process
                 p = Pool(n_proc)
                 indexes = [0]
-                len_slice = int(len(lines)/n_proc)
-                for i in range(1, n_proc+1):
+                len_slice = int(len(lines) / n_proc)
+                for i in range(1, n_proc + 1):
                     if i != n_proc:
-                        indexes.append(len_slice*(i))
+                        indexes.append(len_slice * (i))
                     else:
                         indexes.append(len(lines))
                 results = []
                 for i in range(n_proc):
-                    results.append(p.apply_async(convert_line_to_example,[tokenizer, lines[indexes[i]:indexes[i+1]], block_size,]))
+                    results.append(p.apply_async(convert_line_to_example,
+                                                 [tokenizer, lines[indexes[i]:indexes[i + 1]], block_size, ]))
                     print(str(i) + " start")
-                p.close() 
+                p.close()
                 p.join()
 
                 self.examples = []
@@ -254,13 +252,10 @@ def _rotate_checkpoints(args, checkpoint_prefix="checkpoint", use_mtime=False) -
         shutil.rmtree(checkpoint)
 
 
-
-
 def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args) -> Tuple[torch.Tensor, torch.Tensor]:
     """ Prepare masked tokens inputs/labels for masked language modeling: 80% MASK, 10% random, 10% original. """
 
-    # add option to change masking independently of kmer
-    mask_list = MASK_LIST[(args.mask_like if args.mask_like is not None else tokenizer.kmer)]
+    mask_list = MASK_LIST[tokenizer.kmer]
 
     if tokenizer.mask_token is None:
         raise ValueError(
@@ -283,8 +278,8 @@ def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args) -> T
     # change masked indices
     masks = deepcopy(masked_indices)
     for i, masked_index in enumerate(masks):
-        end = torch.where(probability_matrix[i]!=0)[0].tolist()[-1]
-        mask_centers = set(torch.where(masked_index==1)[0].tolist())
+        end = torch.where(probability_matrix[i] != 0)[0].tolist()[-1]
+        mask_centers = set(torch.where(masked_index == 1)[0].tolist())
         new_centers = deepcopy(mask_centers)
         for center in mask_centers:
             for mask_number in mask_list:
@@ -311,10 +306,6 @@ def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args) -> T
     inputs[indices_random] = random_words[indices_random]
 
     # The rest of the time (10% of the time) we keep the masked input tokens unchanged
-
-    # testing masks
-    # np.savetxt(args.output_dir + "/masks.txt", masked_indices)
-
     return inputs, labels
 
 
@@ -350,16 +341,17 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
         },
         {"params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
     ]
-    optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon, betas=(args.beta1,args.beta2))
+    optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon,
+                      betas=(args.beta1, args.beta2))
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=t_total
     )
 
     # Check if saved optimizer or scheduler states exist
     if (
-        args.model_name_or_path
-        and os.path.isfile(os.path.join(args.model_name_or_path, "optimizer.pt"))
-        and os.path.isfile(os.path.join(args.model_name_or_path, "scheduler.pt"))
+            args.model_name_or_path
+            and os.path.isfile(os.path.join(args.model_name_or_path, "optimizer.pt"))
+            and os.path.isfile(os.path.join(args.model_name_or_path, "scheduler.pt"))
     ):
         # Load in optimizer and scheduler states
         optimizer.load_state_dict(torch.load(os.path.join(args.model_name_or_path, "optimizer.pt")))
@@ -398,7 +390,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
 
     # writing as txt file as a quick and dirty solution
     if not os.path.exists(args.output_dir + "/total_steps.txt"):
-        with open (args.output_dir + "/total_steps.txt", "w+") as f:
+        with open(args.output_dir + "/total_steps.txt", "w+") as f:
             f.write("%s" % t_total)
 
     global_step = 0
@@ -430,7 +422,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
         epochs_trained, int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0]
     )
     set_seed(args)  # Added here for reproducibility
-    ids_set = {'0':0,'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0}
+    ids_set = {'0': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0}
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         for step, batch in enumerate(epoch_iterator):
@@ -482,7 +474,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
                 if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
                     # Log metrics
                     if (
-                        args.local_rank == -1 and args.evaluate_during_training
+                            args.local_rank == -1 and args.evaluate_during_training
                     ):  # Only evaluate when single GPU otherwise metrics may not average well
                         results = evaluate(args, global_step, model, tokenizer)
                         for key, value in results.items():
@@ -497,7 +489,8 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
                         headers = ""
                     with open(args.output_dir + "/tr_args.csv", "a") as writer:
                         writer.write(headers + ",".join(
-                            str(x) for x in [global_step, scheduler.get_last_lr()[0], ((tr_loss - logging_loss) / args.logging_steps)]) + "\n")
+                            str(x) for x in [global_step, scheduler.get_last_lr()[0],
+                                             ((tr_loss - logging_loss) / args.logging_steps)]) + "\n")
 
                     logging_loss = tr_loss
 
@@ -547,6 +540,7 @@ def evaluate(args, global_step, model: PreTrainedModel, tokenizer: PreTrainedTok
         os.makedirs(eval_output_dir, exist_ok=True)
 
     args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+
     # Note that DistributedSampler samples randomly
 
     def collate(examples: List[torch.Tensor]):
@@ -637,12 +631,6 @@ def main():
 
     # Other parameters
     parser.add_argument(
-        "--mask_like",
-        default=None,
-        type=str,
-        help="Change masking to a different kmer style",
-    )
-    parser.add_argument(
         "--mlm_step_value",
         default=None,
         type=str,
@@ -706,8 +694,8 @@ def main():
         default=-1,
         type=int,
         help="Optional input sequence length after tokenization."
-        "The training dataset will be truncated in block of this size for training."
-        "Default to the model max input length for single sentence inputs (take into account special tokens).",
+             "The training dataset will be truncated in block of this size for training."
+             "Default to the model max input length for single sentence inputs (take into account special tokens).",
     )
     parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
     parser.add_argument("--do_eval", action="store_true", help="Whether to run eval on the dev set.")
@@ -775,7 +763,7 @@ def main():
         type=str,
         default="O1",
         help="For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3']."
-        "See details at https://nvidia.github.io/apex/amp.html",
+             "See details at https://nvidia.github.io/apex/amp.html",
     )
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
     parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
@@ -800,10 +788,10 @@ def main():
             args.model_name_or_path = sorted_checkpoints[-1]
 
     if (
-        os.path.exists(args.output_dir)
-        and os.listdir(args.output_dir)
-        and args.do_train
-        and not args.overwrite_output_dir
+            os.path.exists(args.output_dir)
+            and os.listdir(args.output_dir)
+            and args.do_train
+            and not args.overwrite_output_dir
     ):
         raise ValueError(
             "Output directory ({}) already exists and is not empty. Use --overwrite_output_dir to overcome.".format(
@@ -877,7 +865,6 @@ def main():
         config = config_class.from_pretrained(args.model_name_or_path, cache_dir=args.cache_dir)
     else:
         config = config_class()
-
 
     if args.tokenizer_name:
         tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name, cache_dir=args.cache_dir)

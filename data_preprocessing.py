@@ -178,7 +178,7 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
     create_data_info_file(location, lines)
 
 
-def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None):
+def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc2=None):
     cl_df_list = []
     label_iter = 0
     # just to count left out sequences
@@ -242,9 +242,12 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None):
 
         if perc is not None:
             if perc > 1:
-                raise ValueError("perc is ment to susample here, not oversample, please select a value lower than 1")
+                print("'perc' is >1, interpreting it as number of examples instead of percentage.")
+                if perc > len(split_seq_list) or not isinstance(perc, int):
+                    raise ValueError("'perc' is greater than total examples or not an integer. Use perc to subsample not oversample here")
+
             split_seq_list = list(numpy.array(split_seq_list)[numpy.random.choice(len(split_seq_list),
-                                                                                  int(perc * len(split_seq_list)),
+                                                (int(perc * len(split_seq_list)) if perc < 1 else perc),
                                                                                   replace=False)])
 
         # create kmers
@@ -258,10 +261,12 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None):
     full_df = pd.concat(cl_df_list)
     # shuffle
     full_df = full_df.sample(frac=1).reset_index(drop=True)
+    if perc2 is not None:
+        full_df = full_df.sample(perc2).reset_index()
     return full_df, lo_counter_list
 
 
-def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1, perc=None):
+def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1, perc=None, perc2=None):
     # TODO missing assert str and len of dirList
     possible_names = ["train", "dev", "validation", "test"]
     if filetype not in possible_names:
@@ -290,7 +295,7 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
 
     # write train/test file
     ft_pd, lo_counter = ft_df_creation(class_dirs=dirlist, cap=cap, cutlength=cutlength,
-                                       kmer=kmer, max_mult=max_mult, perc=perc)
+                                       kmer=kmer, max_mult=max_mult, perc=perc, perc2=perc2)
     ft_pd.to_csv(location + "/" + filetype + ".tsv", sep='\t', index=False)
     lines.extend(["%s file:" % filetype,
                   "Left out sequences due to length: %s of classes %s"

@@ -2,7 +2,7 @@ export KMER=6
 export TRAIN_FILE=$PROJECT/created_data/pt_full_train/full_kmers.txt
 export TEST_FILE=$PROJECT/created_data/pt_10_eval/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=$PROJECT/Test_runs/pt_dnabert_exact_full
+export OUTPUT_PATH=$PROJECT/Test_runs/pt_dnabert_exact_full_4
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
@@ -14,9 +14,9 @@ python run_pretrain.py \
     --do_eval \
     --eval_data_file=$TEST_FILE \
     --mlm \
-    --gradient_accumulation_steps 50 \
-    --per_gpu_train_batch_size 40 \
-    --per_gpu_eval_batch_size 32 \
+    --gradient_accumulation_steps 5 \
+    --per_gpu_train_batch_size 50 \
+    --per_gpu_eval_batch_size 50 \
     --save_steps 500 \
     --save_total_limit 20 \
     --max_steps 200000 \
@@ -36,4 +36,5 @@ python run_pretrain.py \
     --add_run_info 'pt of full bert with all of the paper params, full train data' \
     --mlm_step_value 100000 \
     --mlm_prob_step 0.03333334 \
+    --should_continue \
     --fp16

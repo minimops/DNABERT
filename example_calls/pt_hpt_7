@@ -1,8 +1,8 @@
 export KMER=6
-export TRAIN_FILE=../created_data/pt_1_percent/full_kmers.txt
-export TEST_FILE=../created_data/pt_1_percent/full_kmers.txt
+export TRAIN_FILE=$PROJECT/created_data/pt_10_train/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_015_eval/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=../Test_runs/pt_testing_k2_mask
+export OUTPUT_PATH=../Test_runs/pt_hpt_7
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
@@ -15,23 +15,23 @@ python run_pretrain.py \
     --eval_data_file=$TEST_FILE \
     --mlm \
     --gradient_accumulation_steps 1 \
-    --per_gpu_train_batch_size 32 \
-    --per_gpu_eval_batch_size 32 \
-    --save_steps 200 \
+    --per_gpu_train_batch_size 180 \
+    --per_gpu_eval_batch_size 100 \
+    --save_steps 400 \
     --save_total_limit 20 \
-    --max_steps 1000 \
+    --max_steps 4000 \
     --evaluate_during_training \
-    --logging_steps 100 \
+    --logging_steps 400 \
     --line_by_line \
-    --learning_rate 4e-4 \
+    --learning_rate 2e-4 \
     --block_size 512 \
     --adam_epsilon 1e-6 \
     --weight_decay 0.01 \
     --beta1 0.9 \
     --beta2 0.98 \
     --mlm_probability 0.025 \
-    --warmup_steps 1000 \
+    --warmup_steps 200 \
     --overwrite_output_dir \
     --n_process 24 \
-    --add_run_info 'test' \
-    --mask_like 8
+    --add_run_info 'pt with 10percent train data and all the paper used params (exept steps and grad accum). Bert small.
+                   learning rate of 2e-4, gradient_acc of 1, weight decay of 0.01, warmup of 5%, mlm of 15%, 1.9GB file'

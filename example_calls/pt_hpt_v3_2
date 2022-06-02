@@ -1,8 +1,8 @@
 export KMER=6
 export TRAIN_FILE=$PROJECT/created_data/pt_10_train/full_kmers.txt
-export TEST_FILE=$PROJECT/created_data/pt_025_eval/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_015_eval/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=../Test_runs/test_apex
+export OUTPUT_PATH=../Test_runs/pt_hpt_v3_2
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
@@ -14,25 +14,25 @@ python run_pretrain.py \
     --do_eval \
     --eval_data_file=$TEST_FILE \
     --mlm \
-    --gradient_accumulation_steps 1 \
-    --per_gpu_train_batch_size 180 \
-    --per_gpu_eval_batch_size 100 \
-    --save_steps 200 \
-    --save_total_limit 30 \
-    --max_steps 2000 \
+    --gradient_accumulation_steps 4 \
+    --per_gpu_train_batch_size 125 \
+    --per_gpu_eval_batch_size 250 \
+    --save_steps 250 \
+    --save_total_limit 20 \
+    --max_steps 10000 \
     --evaluate_during_training \
-    --logging_steps 200 \
+    --logging_steps 250 \
     --line_by_line \
-    --learning_rate 4e-4 \
+    --learning_rate 6e-4 \
     --block_size 512 \
     --adam_epsilon 1e-6 \
     --weight_decay 0.01 \
     --beta1 0.9 \
     --beta2 0.98 \
     --mlm_probability 0.025 \
-    --warmup_steps 100 \
+    --warmup_steps 500 \
     --overwrite_output_dir \
-    --n_process 24 \
+    --n_process 32 \
     --fp16 \
-    --should_continue \
-    --add_run_info 'testing mixed precision'
+    --add_run_info 'pt with 10percent train data and all the paper used params (exept steps and grad accum). Bert small. 4 gpus
+                   learning rate of 6e-4, batch size of 1000, weight decay of 0.01, warmup of 5%, mlm of 15%, 1.9GB file.'

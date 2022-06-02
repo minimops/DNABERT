@@ -874,6 +874,7 @@ def main():
     )
     
     # Other parameters
+    parser.add_argument("--freeze", action="store_true", help="Freeze Bert layers except fo the classification one")
     parser.add_argument(
         "--visualize_data_dir",
         default=None,
@@ -1137,6 +1138,12 @@ def main():
             cache_dir=args.cache_dir if args.cache_dir else None,
         )
         logger.info('finish loading model')
+
+        # freeze layers
+        if args.freeze:
+            for param in model.bert.parameters():
+                param.requires_grad = False
+            logger.info('Freezing all but the classification layer')
 
         if args.local_rank == 0:
             torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
