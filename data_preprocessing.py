@@ -5,7 +5,7 @@ from Bio import SeqIO
 from statistics import mean, median
 import os
 from math import ceil
-from motif.motif_utils import seq2kmer
+# from motif.motif_utils import seq2kmer
 from src.run_funs import create_dir, create_data_info_file
 
 
@@ -44,6 +44,8 @@ def split_sequences_no(seq_list, low_b=5, upp_b=510, rat_max=.5):
         diff = len(seq)
         while diff > 0:
             # bias sample if full length
+            if diff < low_b:
+                break
             n.append(min(sample_cut_length(low_b, upp_b, rat_max), diff))
             diff = len(seq) - sum(n)
 
@@ -74,6 +76,8 @@ def split_sequences_rand(seq_list, low_b=5, upp_b=510, rat_max=.5, ratio=1):
         amt = ratio * ceil(len(seq) / expL)
         for i in range(amt):
             cutLength = sample_cut_length(low_b, min(upp_b, len(seq)), rat_max)
+            if cutLength < low_b:
+                continue
             # double plus one cuz of range and to include possibility of up to end
             cutStart = numpy.random.randint(0, len(seq) - cutLength + 1 + 1)
             split_seq_list.append(seq[cutStart:cutStart + cutLength])
@@ -92,10 +96,10 @@ def sample_cut_length(low_b, upp_b, rat_max):
 
 
 # load into seq to kmer function
-def list2kmer(spl_sequences, k):
+def list2kmer(spl_sequences, k, s):
     fin = []
     for spl in spl_sequences:
-        fin.append(seq2kmer(spl, k))
+        fin.append(seq2kmer(spl, k, s))
     return fin
 
 
@@ -105,6 +109,25 @@ def removeNAseq(seqList):
         if "N" in seq:
             seqList.remove(seq)
     return seqList
+
+
+def seq2kmer(seq, k, stride=1):
+    """
+    Convert original sequence to kmers
+
+    Arguments:
+    seq -- str, original sequence.
+    k -- int, kmer of length k specified.
+
+    Returns:
+    kmers -- str, kmers separated by space
+
+    """
+    if stride > 1:
+        seq = seq[:-stride]
+    kmer = [seq[x:x + k] for x in range(len(seq) + 1 - k)[::stride]]
+    kmers = " ".join(kmer)
+    return kmers
 
 
 # remove genomes with 'N' entries
@@ -129,7 +152,13 @@ def seq_sub_sample(d1, d2, perc):
     return list(seqs[0]), list(seqs[1])
 
 
-def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510, rat_max=.5, ratio=1, perc=None):
+# count upper bound to give to pt_data_process for a given number of kmers desired,
+# respective of k and stride
+def calc_upp_bound(n_mer, k, s):
+    return (n_mer - 1) * s + k
+
+
+def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510, rat_max=.5, ratio=1, perc=None, perc2=None, s=1):
     location = create_dir(name, path)
     lines = []
     split_seqs_both = []
@@ -158,6 +187,8 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
     lines.append("\n" + add_info)
 
     random.shuffle(split_seqs_both)
+    if perc2 is not None:
+        split_seqs_both = random.sample(split_seqs_both, perc2)
 
     # write as interim text file
     textfile = open(location + '/split_interim.txt', "w")
@@ -166,7 +197,7 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
     textfile.close()
 
     # create kmers
-    kmer_seqs_all = list2kmer(split_seqs_both, kmer)
+    kmer_seqs_all = list2kmer(split_seqs_both, kmer, s)
 
     # write final kmers as text file
     textfile = open(location + '/full_kmers.txt', "w")
@@ -244,16 +275,18 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc
             if perc > 1:
                 print("'perc' is >1, interpreting it as number of examples instead of percentage.")
                 if perc > len(split_seq_list) or not isinstance(perc, int):
-                    raise ValueError("'perc' is greater than total examples or not an integer. Use perc to subsample not oversample here")
+                    raise ValueError(
+                        "'perc' is greater than total examples or not an integer. Use perc to subsample not oversample here")
 
             split_seq_list = list(numpy.array(split_seq_list)[numpy.random.choice(len(split_seq_list),
-                                                (int(perc * len(split_seq_list)) if perc < 1 else perc),
+                                                                                  (int(perc * len(
+                                                                                      split_seq_list)) if perc < 1 else perc),
                                                                                   replace=False)])
 
         # create kmers
-        split_seq_kmer_list = list2kmer(split_seq_list, kmer)
+        # split_seq_kmer_list = list2kmer(split_seq_list, kmer)
         # create df
-        cl_df_list.append(pd.DataFrame({'sequence': split_seq_kmer_list,
+        cl_df_list.append(pd.DataFrame({'sequence': split_seq_list,
                                         'label': label_iter}))
         lo_counter_list.append(lo_counter)
         label_iter += 1
@@ -266,7 +299,8 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc
     return full_df, lo_counter_list
 
 
-def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1, perc=None, perc2=None):
+def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1,
+                    perc=None, perc2=None, s=1):
     # TODO missing assert str and len of dirList
     possible_names = ["train", "dev", "validation", "test"]
     if filetype not in possible_names:
@@ -287,7 +321,7 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
              "Kmer: " + str(kmer),
              "cap: %s" % cap,
              "max_mult: %s" % max_mult
-            ]
+             ]
     if labels is not None:
         lines.append("labels %s are %s" % (labels if labels is not None else '',
                                            list(range(len(labels)))))
@@ -296,7 +330,11 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
     # write train/test file
     ft_pd, lo_counter = ft_df_creation(class_dirs=dirlist, cap=cap, cutlength=cutlength,
                                        kmer=kmer, max_mult=max_mult, perc=perc, perc2=perc2)
-    ft_pd.to_csv(location + "/" + filetype + ".tsv", sep='\t', index=False)
+    ft_pd.to_csv(location + "/" + "interim_" + filetype + ".tsv", sep='\t', index=False)
+
+    ft_pd["sequence"] = ft_pd.apply(lambda row: seq2kmer(row[0], kmer, s), axis=1)
+    ft_pd.to_csv(location + "/" +  filetype + ".tsv", sep='\t', index=False)
+
     lines.extend(["%s file:" % filetype,
                   "Left out sequences due to length: %s of classes %s"
                   % (", ".join([str(x) for x in lo_counter]),

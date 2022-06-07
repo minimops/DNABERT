@@ -22,7 +22,7 @@ def kmer2seq(kmers):
     assert len(seq) == len(kmers_list) + len(kmers_list[0]) - 1
     return seq
 
-def seq2kmer(seq, k):
+def seq2kmer(seq, k, stride=1):
     """
     Convert original sequence to kmers
     
@@ -34,7 +34,9 @@ def seq2kmer(seq, k):
     kmers -- str, kmers separated by space
 
     """
-    kmer = [seq[x:x+k] for x in range(len(seq)+1-k)]
+    if stride > 1:
+        seq = seq[:-stride]
+    kmer = [seq[x:x+k] for x in range(len(seq)+1-k)[::stride]]
     kmers = " ".join(kmer)
     return kmers
 

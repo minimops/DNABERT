@@ -1,0 +1,39 @@
+export KMER=6
+export TRAIN_FILE=$PROJECT/created_data/pt_10_train_v4/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_015_eval_v4/full_kmers.txt
+export SOURCE=../
+export OUTPUT_PATH=$PROJECT/Test_runs/pt_hpt_v3_10
+
+python run_pretrain.py \
+    --output_dir $OUTPUT_PATH \
+    --model_type=dna \
+    --tokenizer_name=dna$KMER \
+    --config_name=$SOURCE/src/transformers/dnabert-config/bert-config-small/config.json \
+    --do_train \
+    --train_data_file=$TRAIN_FILE \
+    --do_eval \
+    --eval_data_file=$TEST_FILE \
+    --mlm \
+    --gradient_accumulation_steps 4 \
+    --per_gpu_train_batch_size 125 \
+    --per_gpu_eval_batch_size 250 \
+    --save_steps 250 \
+    --save_total_limit 20 \
+    --max_steps 10000 \
+    --evaluate_during_training \
+    --logging_steps 250 \
+    --line_by_line \
+    --learning_rate 4e-4 \
+    --block_size 512 \
+    --adam_epsilon 1e-6 \
+    --weight_decay 0.01 \
+    --beta1 0.9 \
+    --beta2 0.98 \
+    --mlm_probability 0.05 \
+    --warmup_steps 500 \
+    --overwrite_output_dir \
+    --n_process 32 \
+    --fp16 \
+    --mask_like 3 \
+    --add_run_info 'pt with 10percent train data and all the paper used params (exept steps and grad accum). Bert small. 4 gpus
+                   learning rate of 4e-4, batch size of 1000, weight decay of 0.01, warmup of 5%, mlm of 15%, .6GB file.'
