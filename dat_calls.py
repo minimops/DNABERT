@@ -20,6 +20,10 @@ pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                 name='pt_10_train_v2', path='created_data', kmer=6, ratio=2, low_b=12, perc=0.1,
                 add_info='10 percent of train dataset with higher lower bound of 12')
 
+pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
+                           "../data/viral-phage_1_3/train"],
+                name='pt_10_train_v9', path='created_data', kmer=6, ratio=2, low_b=36, perc=0.1,
+                add_info='10 percent of train dataset with higher lower bound of 12')
 
 pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                            "../data/viral-phage_1_3/train"],
@@ -95,6 +99,12 @@ ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral
                 name='ft_hpt_v3_setup_v3', path='created_data', cap=1024, kmer=6, filetype="dev",
                 cutlength=150, max_mult=4, perc=750000, add_info='10 percent split with 1024 cap and 4 max mult')
 ####
+
+
+
+ft_data_process(dirlist=["../data/viral-no-phage_1_3/test", "../data/viral-phage_1_3/test"],
+                name='pred_test_setup', path='created_data', cap=1024, kmer=6, filetype="dev",
+                cutlength=150, max_mult=4, perc=1000000, add_info='10 percent split with 1024 cap and 4 max mult')
 
 
 

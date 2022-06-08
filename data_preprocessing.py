@@ -286,16 +286,19 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc
         # create kmers
         # split_seq_kmer_list = list2kmer(split_seq_list, kmer)
         # create df
-        cl_df_list.append(pd.DataFrame({'sequence': split_seq_list,
-                                        'label': label_iter}))
+        df = pd.DataFrame({'sequence': split_seq_list,
+                                        'label': label_iter})
+        if perc2 is not None:
+            df = df.sample(perc2).reset_index()
+        cl_df_list.append(df)
         lo_counter_list.append(lo_counter)
         label_iter += 1
     # all classes together
     full_df = pd.concat(cl_df_list)
     # shuffle
     full_df = full_df.sample(frac=1).reset_index(drop=True)
-    if perc2 is not None:
-        full_df = full_df.sample(perc2).reset_index()
+    # if perc2 is not None:
+    #     full_df = full_df.sample(perc2).reset_index()
     return full_df, lo_counter_list
 
 

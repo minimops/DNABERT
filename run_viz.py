@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-loc = "../models/ft_pt_hpt"
+loc = "../ft_pt_hpt"
 
 dirs = []
 for m in listdir(loc):
@@ -31,6 +31,23 @@ sns.set_theme()
 sns.set_style("whitegrid")
 x = sns.relplot(
     data=full_df,
+    kind="line",
+    x="global_step",
+    y="acc",
+    hue="run_id",
+    style = "run_id"
+)
+plt.show()
+
+
+excl = ["ft_hpt_v3_base_LR_trial", "ft_hpt_v3_1", "ft_hpt_v3_3", "ft_hpt_v3_9", "ft_hpt_v3_10"]
+full_df2 = full_df[~full_df.run_id.isin(excl)]
+
+
+sns.set_theme()
+sns.set_style("whitegrid")
+x = sns.relplot(
+    data=full_df2,
     kind="line",
     x="global_step",
     y="acc",
