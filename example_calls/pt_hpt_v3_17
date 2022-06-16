@@ -1,8 +1,8 @@
 export KMER=6
-export TRAIN_FILE=$PROJECT/created_data/pt_10_train_v7/full_kmers.txt
-export TEST_FILE=$PROJECT/created_data/pt_015_eval_v4/full_kmers.txt
+export TRAIN_FILE=$PROJECT/created_data/pt_10_train_v10/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_015_eval_v10/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=$PROJECT/Test_runs/pt_hpt_v3_17
+export OUTPUT_PATH=$PROJECT/Test_runs/pt_hpt_v3_25
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
@@ -36,4 +36,4 @@ python run_pretrain.py \
     --fp16 \
     --mask_like 3 \
     --add_run_info 'pt with 10percent train data and all the paper used params (exept steps and grad accum). Bert small. 4 gpus
-                   learning rate of 1e-3, batch size of 1000, weight decay of 0.01, warmup of 5%, mlm of 15%, 1.9GB file. stride of 3'
+                   learning rate of 1e-3, batch size of 1000, weight decay of 0.01, warmup of 5%, mlm of 15%, 1.9GB file. stride of 3. less long seqs.'

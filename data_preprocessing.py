@@ -158,7 +158,8 @@ def calc_upp_bound(n_mer, k, s):
     return (n_mer - 1) * s + k
 
 
-def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510, rat_max=.5, ratio=1, perc=None, perc2=None, s=1):
+def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510, rat_max=.5, ratio=1,
+                    perc=None, perc2=None, s=1, do_no=True, do_samp=True):
     location = create_dir(name, path)
     lines = []
     split_seqs_both = []
@@ -169,8 +170,17 @@ def pt_data_process(dirs_list, name, path, kmer, add_info='', low_b=5, upp_b=510
         samp_cut = split_sequences_rand(seqs, low_b, upp_b, rat_max, ratio)
         if perc is not None:
             n_o_cut, samp_cut = seq_sub_sample(n_o_cut, samp_cut, perc)
-        split_seqs_both.extend(n_o_cut)
-        split_seqs_both.extend(samp_cut)
+
+        # TODO this is obvsl bad, no need to do this after not before
+        # fix would be do no and samp seperately with condition
+        if do_no:
+            split_seqs_both.extend(n_o_cut)
+        else:
+            n_o_cut = []
+        if do_samp:
+            split_seqs_both.extend(samp_cut)
+        else:
+            samp_cut = []
 
         lines.extend(["Data from dir: " + d,
                       "Number of non NA sequences: " + str(len(seqs)),

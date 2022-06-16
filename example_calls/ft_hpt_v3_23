@@ -1,7 +1,7 @@
 export KMER=6
-export MODEL_PATH=$PROJECT/models/int_base_100k
+export MODEL_PATH=$PROJECT/models/pt_hpt/pt_hpt_v3_23
 export DATA_PATH=$PROJECT/created_data/ft_hpt_v3_setup_v3
-export OUTPUT_PATH=$PROJECT/Test_runs/ft_full_frozen_trial_100k
+export OUTPUT_PATH=$PROJECT/models/ft_pt_hpt/ft_hpt_v3_23
 
 python run_finetune.py \
     --model_type dna \
@@ -27,5 +27,4 @@ python run_finetune.py \
     --n_process 24 \
     --fp16 \
     --freeze \
-    --should_continue \
-    --add_run_info 'ft run frozen layers. trial'
+    --add_run_info 'ft run frozen layers. For hpt scale setup'

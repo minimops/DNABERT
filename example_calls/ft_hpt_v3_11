@@ -11,7 +11,7 @@ python run_finetune.py \
     --do_train \
     --do_eval \
     --data_dir $DATA_PATH \
-    --max_seq_length 30 \
+    --max_seq_length 54 \
     --per_gpu_eval_batch_size=4096 \
     --per_gpu_train_batch_size=64 \
     --learning_rate 2e-5 \
