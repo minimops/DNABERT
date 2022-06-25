@@ -25,7 +25,7 @@ import optuna
 from optuna.trial import TrialState
 
 DIRNUM = 0
-
+N_TRAIN_EXAMPLES = 2000000
 
 def create_tokenizer(tokenizer_class, args):
     return tokenizer_class.from_pretrained(
@@ -185,6 +185,9 @@ def objective(trial, args):
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         for step, batch in enumerate(epoch_iterator):
 
+            if step * args.train_batch_size >= N_TRAIN_EXAMPLES:
+                break
+
             # Skip past any already trained steps if resuming training
             if steps_trained_in_current_epoch > 0:
                 steps_trained_in_current_epoch -= 1
@@ -224,17 +227,18 @@ def objective(trial, args):
                 global_step += 1
 
                 # evaluate
-                if global_step % args.logging_steps == 0:
-                    results = evaluate(args, model, tokenizer, global_step)
+                if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
+                    evaluate(args, model, tokenizer, global_step)
 
+        # evaluate
+        results = evaluate(args, model, tokenizer, global_step)
 
+        trial.report(results["acc"], global_step)
 
-                    if global_step % args.report_steps == 0:
-                        trial.report(results["acc"], global_step)
+        # Handle pruning based on the intermediate value.
+        if trial.should_prune():
+            raise optuna.exceptions.TrialPruned()
 
-                    # Handle pruning based on the intermediate value.
-                    if trial.should_prune():
-                        raise optuna.exceptions.TrialPruned()
 
                 # write training file
                 # logs = {}
