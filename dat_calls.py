@@ -37,7 +37,10 @@ pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                 add_info='sampling 10 percent of train data with ratio 2higher low bound of 12',
                 perc=.015)
 ###########
-
+pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
+                           "../data/viral-phage_1_3/train"],
+                name='pt_10_train_v13', path='created_data', kmer=6, ratio=2, low_b=36, perc=0.1, rat_max=.3,
+                add_info='10 percent of train dataset with higher lower bound of 12')
 #########
 pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                            "../data/viral-phage_1_3/train"],
@@ -84,7 +87,7 @@ pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
 
 pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                            "../data/viral-phage_1_3/train"],
-                name='pt_10_train_v10', path='created_data', kmer=6, ratio=5, low_b=12, perc=0.1, s=3, upp_b=1000,
+                name='pt_10_train_v10', path='created_data', kmer=6, ratio=5, low_b=36, perc=0.1, s=3, upp_b=1000,
                 perc2=772000, add_info='lower bound of 12, upper of 1000')
 
 pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
@@ -105,6 +108,10 @@ pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                 add_info='sampling 10 percent of train data with ratio 2higher low bound of 36',
                 perc=.015)
 ###########
+pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
+                           "../data/viral-phage_1_3/train"],
+                name='pt_10_train_v14', path='created_data', kmer=6, ratio=5, low_b=36, perc=0.1, s=3, upp_b=1000, rat_max=.3,
+                perc2=772000, add_info='lower bound of 36, upper of 1000, bias of .3')
 ########
 
 
@@ -145,3 +152,15 @@ ft_data_process(dirlist=["../data/viral-no-phage_1_3/test", "../data/viral-phage
 
 
 
+#######
+pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
+                           "../data/viral-phage_1_3/train"],
+                name='pt_full_train_v9', path='created_data', kmer=6, ratio=2, low_b=36,
+                add_info='full dataset for pretraining, created like v9 test dataset')
+#######
+pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
+                           "../data/viral-phage_1_3/train"],
+                name='pt_10_eval_v2', path='created_data', kmer=6, ratio=2, low_b=36,
+                add_info='sampling 10 percent of train data with ratio 2higher low bound of 12',
+                perc=.1)
+#######

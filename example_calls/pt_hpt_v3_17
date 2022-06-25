@@ -1,4 +1,4 @@
-export KMER=6
+    export KMER=6
 export TRAIN_FILE=$PROJECT/created_data/pt_10_train_v10/full_kmers.txt
 export TEST_FILE=$PROJECT/created_data/pt_015_eval_v10/full_kmers.txt
 export SOURCE=../
