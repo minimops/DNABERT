@@ -134,9 +134,6 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
             if args.task_name[:3] == "dna" and args.task_name != "dnasplice":
-                if args.do_ensemble_pred:
-                    probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
-                else:
                     probs = softmax(torch.tensor(preds, dtype=torch.float32))[:, 1].numpy()
             elif args.task_name == "dnasplice":
                 probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
