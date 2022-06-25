@@ -247,13 +247,13 @@ def objective(trial, args):
                 # logs["loss"] = loss_scalar
                 # logging_loss = tr_loss
 
-                if not os.path.exists(args.output_dir + "/tr_args.csv"):
-                    headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
-                else:
-                    headers = ""
-                with open(args.output_dir + "/tr_args.csv", "a") as writer:
-                    writer.write(headers + ",".join(
-                        str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
+                # if not os.path.exists(args.output_dir + "/tr_args.csv"):
+                #     headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
+                # else:
+                #     headers = ""
+                # with open(args.output_dir + "/tr_args.csv", "a") as writer:
+                #     writer.write(headers + ",".join(
+                #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
     return results["acc"]
 
