@@ -237,15 +237,15 @@ def objective(trial, args):
                         raise optuna.exceptions.TrialPruned()
 
                 # write training file
-                logs = {}
-                for key, value in results.items():
-                    eval_key = "eval_{}".format(key)
-                    logs[eval_key] = value
-                loss_scalar = (tr_loss - logging_loss) / args.logging_steps
-                learning_rate_scalar = scheduler.get_lr()[0]
-                logs["learning_rate"] = learning_rate_scalar
-                logs["loss"] = loss_scalar
-                logging_loss = tr_loss
+                # logs = {}
+                # for key, value in results.items():
+                #     eval_key = "eval_{}".format(key)
+                #     logs[eval_key] = value
+                # loss_scalar = (tr_loss - logging_loss) / args.logging_steps
+                # learning_rate_scalar = scheduler.get_lr()[0]
+                # logs["learning_rate"] = learning_rate_scalar
+                # logs["loss"] = loss_scalar
+                # logging_loss = tr_loss
 
                 if not os.path.exists(args.output_dir + "/tr_args.csv"):
                     headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
