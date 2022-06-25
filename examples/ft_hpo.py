@@ -393,11 +393,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Wrap the objective inside a lambda and call objective inside it
-    func = lambda trial: objective(trial, args)
-
     study = optuna.create_study(direction="maximize")
-    study.optimize(func, n_trials=10, timeout=60)
+    study.optimize(lambda trial: objective(trial, args), n_trials=10, timeout=60)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
