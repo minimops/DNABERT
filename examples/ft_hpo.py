@@ -1,5 +1,5 @@
 import argparse
-from run_finetune import MODEL_CLASSES, load_and_cache_examples, TOKEN_ID_GROUP
+from run_finetune import evaluate, MODEL_CLASSES, load_and_cache_examples, TOKEN_ID_GROUP
 from transformers import glue_processors as processors
 from transformers import glue_output_modes as output_modes
 from transformers import glue_compute_metrics as compute_metrics
@@ -83,83 +83,6 @@ def prepare_training(args):
     model = get_model(model_class, config, args)
 
     return config, tokenizer, model
-
-
-def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
-    # Loop to handle MNLI double evaluation (matched, mis-matched)
-    eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
-    eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
-    if args.task_name[:3] == "dna":
-        softmax = torch.nn.Softmax(dim=1)
-
-    results = {}
-    for eval_task, eval_output_dir in zip(eval_task_names, eval_outputs_dirs):
-        eval_dataset = load_and_cache_examples(args, eval_task, tokenizer, evaluate=evaluate)
-
-        if not os.path.exists(eval_output_dir) and args.local_rank in [-1, 0]:
-            os.makedirs(eval_output_dir)
-
-        args.eval_batch_size = args.per_gpu_eval_batch_size
-        # Note that DistributedSampler samples randomly
-        eval_sampler = SequentialSampler(eval_dataset)
-        eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
-
-        eval_loss = 0.0
-        nb_eval_steps = 0
-        preds = None
-        probs = None
-        out_label_ids = None
-        for batch in tqdm(eval_dataloader, desc="Evaluating"):
-            model.eval()
-            batch = tuple(t.to(args.device) for t in batch)
-
-            with torch.no_grad():
-                inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
-                if args.model_type != "distilbert":
-                    inputs["token_type_ids"] = (
-                        batch[2] if args.model_type in TOKEN_ID_GROUP else None
-                    )  # XLM, DistilBERT, RoBERTa, and XLM-RoBERTa don't use segment_ids
-                outputs = model(**inputs)
-                tmp_eval_loss, logits = outputs[:2]
-
-                eval_loss += tmp_eval_loss.mean().item()
-            nb_eval_steps += 1
-            if preds is None:
-                preds = logits.detach().cpu().numpy()
-                out_label_ids = inputs["labels"].detach().cpu().numpy()
-            else:
-                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
-                out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
-
-        eval_loss = eval_loss / nb_eval_steps
-        if args.output_mode == "classification":
-            if args.task_name[:3] == "dna" and args.task_name != "dnasplice":
-                    probs = softmax(torch.tensor(preds, dtype=torch.float32))[:, 1].numpy()
-            elif args.task_name == "dnasplice":
-                probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
-            preds = np.argmax(preds, axis=1)
-        elif args.output_mode == "regression":
-            preds = np.squeeze(preds)
-
-        result = compute_metrics(eval_task, preds, out_label_ids, probs)
-        results.update(result)
-
-        # write the first line of eval_results file
-        eval_result = ""
-        output_eval_file = os.path.join(eval_output_dir, prefix, "eval_results.csv")
-        if not exists(output_eval_file):
-            eval_result = ",".join(["global_step", "eval_loss"]) + "," + ",".join(sorted(result.keys())) \
-                          + "\n"
-        eval_result = eval_result + ",".join([str(x) for x in [global_step, eval_loss]]) + ","
-
-        with open(output_eval_file, "a") as writer:
-            for key in sorted(result.keys()):
-                eval_result = eval_result + ("%.6f" % result[key])
-                if key is not sorted(result.keys())[-1]:
-                    eval_result = eval_result + ","
-            writer.write(eval_result + "\n")
-
-    return results
 
 
 def objective(trial, args):
@@ -435,7 +358,14 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
     parser.add_argument("--warmup_percent", default=0, type=float,
                         help="Linear warmup over warmup_percent*total_steps.")
-
+    parser.add_argument("--do_ensemble_pred", action="store_true",
+                        help="Whether to do ensemble prediction with kmer 3456.")
+    parser.add_argument(
+        "--gradient_accumulation_steps",
+        type=int,
+        default=1,
+        help="Number of updates steps to accumulate before performing a backward/update pass.",
+    )
     parser.add_argument("--logging_steps", type=int, default=500, help="Log every X updates steps.")
     parser.add_argument("--report_steps", type=int, default=500, help="report to trial every X updates steps.")
     parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
@@ -448,6 +378,12 @@ if __name__ == "__main__":
         "--fp16",
         action="store_true",
         help="Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit",
+    )
+    parser.add_argument(
+        "--overwrite_output_dir", action="store_true", help="Overwrite the content of the output directory",
+    )
+    parser.add_argument(
+        "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets",
     )
     parser.add_argument(
         "--fp16_opt_level",
