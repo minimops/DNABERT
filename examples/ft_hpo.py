@@ -1,5 +1,5 @@
 import argparse
-from run_finetune import evaluate, MODEL_CLASSES, load_and_cache_examples, TOKEN_ID_GROUP
+from run_finetune import MODEL_CLASSES, load_and_cache_examples, TOKEN_ID_GROUP
 from transformers import glue_processors as processors
 from transformers import glue_output_modes as output_modes
 from transformers import glue_compute_metrics as compute_metrics
