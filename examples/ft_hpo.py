@@ -364,7 +364,7 @@ if __name__ == "__main__":
         "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets",
     )
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
-
+    parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
     parser.add_argument(
         "--fp16",
         action="store_true",
