@@ -383,9 +383,6 @@ if __name__ == "__main__":
         "--overwrite_output_dir", action="store_true", help="Overwrite the content of the output directory",
     )
     parser.add_argument(
-        "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets",
-    )
-    parser.add_argument(
         "--fp16_opt_level",
         type=str,
         default="O1",
