@@ -2,6 +2,22 @@ import argparse
 from run_finetune import evaluate, MODEL_CLASSES, load_and_cache_examples, TOKEN_ID_GROUP
 from transformers import glue_processors as processors
 from transformers import glue_output_modes as output_modes
+
+from transformers import (
+    AdamW,
+    BertConfig,
+    BertForSequenceClassification,
+    BertForLongSequenceClassification,
+    BertForLongSequenceClassificationCat,
+    BertTokenizer,
+    DNATokenizer,
+    get_linear_schedule_with_warmup,
+)
+
+import torch
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
+from tqdm import tqdm, trange
+
 import os
 import optuna
 from optuna.trial import TrialState
@@ -273,7 +289,7 @@ if __name__ == "__main__":
         default=None,
         type=str,
         required=True,
-        help="Path to pre-trained model or shortcut name selected in the list: " + ", ".join(ALL_MODELS),
+        help="Path to pre-trained model",
     )
     parser.add_argument(
         "--task_name",
