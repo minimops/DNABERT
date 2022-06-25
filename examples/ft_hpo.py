@@ -87,9 +87,9 @@ def prepare_training(args):
 
 def objective(trial, args):
     # create trial arguments
-    args.learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-3, log=True)
+    args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
     args.num_epochs = trial.suggest_int("num_epochs", 1, 5)
-    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64, 128, 256])
+    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64, 128])
     args.warmup_percent = trial.suggest_float("warmup_percent", 0.05, 0.2)
     # additional stuff
     # weight decay
