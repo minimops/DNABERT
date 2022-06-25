@@ -456,6 +456,7 @@ if __name__ == "__main__":
         help="For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3']."
              "See details at https://nvidia.github.io/apex/amp.html",
     )
+    parser.add_argument("--do_predict", action="store_true", help="Whether to do prediction on the given dataset.")
 
     args = parser.parse_args()
 
