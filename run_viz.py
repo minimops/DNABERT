@@ -41,7 +41,7 @@ plt.show()
 excl1 = ["ft_hpt_v3_base_LR_trial", "ft_hpt_v3_15", "ft_hpt_v3_11", "ft_hpt_v3_16",
          "ft_hpt_v3_17", "ft_hpt_v3_17_2", "ft_hpt_v3_18", "ft_hpt_v3_19", "ft_hpt_v3_20",
          "ft_hpt_v3_21", "ft_hpt_v3_14", "ft_hpt_v3_10", "ft_hpt_v3_10_2", "ft_hpt_v3_6",
-         "ft_hpt_v3_7", "ft_hpt_v3_23"]
+         "ft_hpt_v3_7", "ft_hpt_v3_23", "ft_hpt_v3_3", "ft_hpt_v3_1"]
 full_df3 = full_df[~full_df.run_id.isin(excl1)]
 
 sns.set_theme()

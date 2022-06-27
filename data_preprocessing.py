@@ -73,7 +73,7 @@ def split_sequences_rand(seq_list, low_b=5, upp_b=510, rat_max=.5, ratio=1):
             print("sequence skipped because of length < %s" % low_b)
             continue
         # ceiling here to create at least some for short seqs
-        amt = ratio * ceil(len(seq) / expL)
+        amt = int(ratio * ceil(len(seq) / expL))
         for i in range(amt):
             cutLength = sample_cut_length(low_b, min(upp_b, len(seq)), rat_max)
             if cutLength < low_b:
