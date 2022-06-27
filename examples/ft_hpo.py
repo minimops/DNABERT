@@ -398,7 +398,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     study = optuna.create_study(direction="maximize")
-    study.optimize(lambda trial: objective(trial, args), n_trials=10, timeout=60)
+    study.optimize(lambda trial: objective(trial, args), n_trials=11, timeout=600)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
