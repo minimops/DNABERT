@@ -137,6 +137,17 @@ ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral
                 name='ft_hpt_v3_setup_v3', path='created_data', cap=1024, kmer=6, filetype="dev",
                 cutlength=150, max_mult=4, perc=750000, add_info    ='10 percent split with 1024 cap and 4 max mult')
 ####
+#####
+ft_data_process(dirlist=["../data/viral-no-phage_1_3/train", "../data/viral-phage_1_3/train"],
+                name='ft_hpo_test', path='created_data', cap=512, kmer=6, filetype="train",
+                cutlength=150, max_mult=2, perc=20000, add_info='10 percent split with 1024 cap and 4 max mult')
+
+
+ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
+                name='ft_hpo_test', path='created_data', cap=512, kmer=6, filetype="dev",
+                cutlength=150, max_mult=2, perc=7500, add_info='10 percent split with 1024 cap and 4 max mult')
+####
+
 
 
 ####

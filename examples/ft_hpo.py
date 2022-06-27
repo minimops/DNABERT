@@ -25,7 +25,7 @@ import optuna
 from optuna.trial import TrialState
 
 DIRNUM = 0
-N_TRAIN_EXAMPLES = 2000000
+N_TRAIN_EXAMPLES = 10000
 
 def create_tokenizer(tokenizer_class, args):
     return tokenizer_class.from_pretrained(
