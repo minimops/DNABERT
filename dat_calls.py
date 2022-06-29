@@ -180,3 +180,8 @@ pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                            "../data/viral-phage_1_3/train"],
                 name='pt_stride_full', path='created_data', kmer=6, ratio=4.7, low_b=36, s=3, upp_b=1000,
                 add_info='full stride 3 training data, lower bound of 36, upper of 1000')
+
+pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
+                           "../data/viral-phage_1_3/train"],
+                name='pt_10_eval_stride', path='created_data', kmer=6, ratio=4.7, low_b=36, s=3, upp_b=1000, perc=.1,
+                add_info='full stride 3 eval data, lower bound of 36, upper of 1000')

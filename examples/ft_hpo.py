@@ -2,7 +2,6 @@ import argparse
 from run_finetune import evaluate, MODEL_CLASSES, load_and_cache_examples, TOKEN_ID_GROUP
 from transformers import glue_processors as processors
 from transformers import glue_output_modes as output_modes
-from transformers import glue_compute_metrics as compute_metrics
 from transformers import (
     AdamW,
     BertConfig,
@@ -15,6 +14,7 @@ from transformers import (
 )
 
 import numpy as np
+import re
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from tqdm import tqdm, trange
@@ -88,29 +88,27 @@ def prepare_training(args):
 def objective(trial, args):
     # create trial arguments
     args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
-    args.num_epochs = trial.suggest_int("num_epochs", 1, 5)
     args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64, 128])
-    args.warmup_percent = trial.suggest_float("warmup_percent", 0.05, 0.2)
+    args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
     # B1, B2
     # dropout probabilities
 
+    # map ints to percentage
+    args.warmup_percent = args.warmup_percent * 0.05
+
     # Setup CUDA, GPU & distributed training
-    if args.local_rank == -1 or args.no_cuda:
-        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-        args.n_gpu = torch.cuda.device_count()
-    else:  # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-        torch.cuda.set_device(args.local_rank)
-        device = torch.device("cuda", args.local_rank)
-        torch.distributed.init_process_group(backend="nccl")
-        args.n_gpu = 1
+    torch.cuda.set_device(args.gpu_id)
+    device = torch.device("cuda", args.gpu_id)
+    # torch.distributed.init_process_group(backend="nccl")
+    args.n_gpu = 1
     args.device = device
 
     # Create output directory if needed
     if args.local_rank in [-1, 0]:
         global DIRNUM
-        args.output_dir = args.output_dir + str(DIRNUM)
+        args.output_dir = re.sub(r'\d+$', '', args.output_dir) + str(DIRNUM)
         os.makedirs(args.output_dir, exist_ok=True)
         DIRNUM += 1
 
@@ -181,12 +179,15 @@ def objective(trial, args):
         epochs_trained, int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0],
     )
 
+    last_auc = 0
+    stop_count = 0
+
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         for step, batch in enumerate(epoch_iterator):
 
-            if step * args.train_batch_size >= N_TRAIN_EXAMPLES:
-                break
+            # if step * args.train_batch_size >= N_TRAIN_EXAMPLES:
+            #     break
 
             # Skip past any already trained steps if resuming training
             if steps_trained_in_current_epoch > 0:
@@ -228,28 +229,40 @@ def objective(trial, args):
 
                 # evaluate
                 if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
-                    evaluate(args, model, tokenizer, global_step)
+                    results = evaluate(args, model, tokenizer, global_step)
 
-        # evaluate
-        results = evaluate(args, model, tokenizer, global_step)
+                    if args.report_steps == -1 or global_step % int(args.report_steps * 64/args.train_batch_size) == 0:
+                        trial.report(results["acc"], global_step)
 
-        trial.report(results["acc"], global_step)
+                        # Handle pruning based on the intermediate value.
+                        if trial.should_prune():
+                            raise optuna.exceptions.TrialPruned()
 
-        # Handle pruning based on the intermediate value.
-        if trial.should_prune():
-            raise optuna.exceptions.TrialPruned()
+                    # early stopping
+                    if args.early_stop != 0:
+                        # record current auc to perform early stop
+                        if results["acc"] < last_auc:
+                            stop_count += 1
+                        else:
+                            stop_count = 0
 
+                        last_auc = results["acc"]
+                        # stop training when patience count is reached
+                        if stop_count == args.early_stop:
+                            trial.report(results["acc"], global_step)
+                            return results["acc"]
 
-                # write training file
-                # logs = {}
-                # for key, value in results.items():
-                #     eval_key = "eval_{}".format(key)
-                #     logs[eval_key] = value
-                # loss_scalar = (tr_loss - logging_loss) / args.logging_steps
-                # learning_rate_scalar = scheduler.get_lr()[0]
-                # logs["learning_rate"] = learning_rate_scalar
-                # logs["loss"] = loss_scalar
-                # logging_loss = tr_loss
+        #
+        # # write training file
+        # logs = {}
+        # for key, value in results.items():
+        #     eval_key = "eval_{}".format(key)
+        #     logs[eval_key] = value
+        # loss_scalar = (tr_loss - logging_loss) / args.logging_steps
+        # learning_rate_scalar = scheduler.get_lr()[0]
+        # logs["learning_rate"] = learning_rate_scalar
+        # logs["loss"] = loss_scalar
+        # logging_loss = tr_loss
 
                 # if not os.path.exists(args.output_dir + "/tr_args.csv"):
                 #     headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
@@ -286,6 +299,9 @@ if __name__ == "__main__":
         default=2,
         type=int,
         help="number of processes used for data process",
+    )
+    parser.add_argument(
+        "--num_train_epochs", default=3.0, type=float, help="Total number of training epochs to perform.",
     )
     parser.add_argument(
         "--should_continue", action="store_true", help="Whether to continue from latest checkpoint in output_dir"
@@ -344,6 +360,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--per_gpu_eval_batch_size", default=8, type=int, help="Batch size per GPU/CPU for evaluation.",
     )
+    parser.add_argument(
+        "--early_stop", default=0, type=int, help="set this to a positive integer if you want to perform early stop. The model will stop \
+                                                    if the acc keep decreasing early_stop times",
+    )
     parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
@@ -378,6 +398,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
+    parser.add_argument("--gpu_id", type=int, default=0, help="To run on cluster with multiple gpus. Set this to the device id")
     parser.add_argument(
         "--fp16",
         action="store_true",
@@ -397,7 +418,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    study = optuna.create_study(direction="maximize")
+    study = optuna.create_study(direction="maximize",
+                                pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(), patience=2)
+                                )
     study.optimize(lambda trial: objective(trial, args), n_trials=11, timeout=600)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
