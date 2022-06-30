@@ -426,9 +426,9 @@ if __name__ == "__main__":
         , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=2,
                                                                           n_startup_trials=3),
                                               patience=1)
-        #,
-        #storage="mysql://example",
-        #load_if_exists=True
+        ,
+        storage="mysql://example",
+        load_if_exists=True
     )
 
     study = optuna.create_study(direction="maximize"
