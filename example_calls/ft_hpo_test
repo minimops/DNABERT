@@ -1,6 +1,6 @@
 export KMER=6
 export MODEL_PATH=$PROJECT/models/pt_hpt/pt_hpt_v3_30
-export DATA_PATH=$PROJECT/created_data/ft_hpo_test
+export DATA_PATH=$PROJECT/created_data/ft_hpo_test2
 export OUTPUT_PATH=$PROJECT/Test_runs/ft_hpo_test5
 
 python ft_hpo.py \
@@ -12,11 +12,11 @@ python ft_hpo.py \
     --max_seq_length 150 \
     --per_gpu_eval_batch_size=2048 \
     --output_dir $OUTPUT_PATH \
-    --logging_steps 200 \
-    --hidden_dropout_prob 0.3 \
+    --logging_steps 1000 \
+    --hidden_dropout_prob 0.2 \
     --weight_decay 0.01 \
     --n_process 24 \
-    --early_stop 3 \
+    --early_stop 4 \
     --gpu_id 0 \
-    --num_train_epochs 3.0 \
+    --num_train_epochs 6.0 \
     --fp16

@@ -26,7 +26,7 @@ import optuna
 from optuna.trial import TrialState
 
 DIRNUM = 0
-N_TRAIN_EXAMPLES = 75000
+N_TRAIN_EXAMPLES = 750000
 
 def create_tokenizer(tokenizer_class, args):
     return tokenizer_class.from_pretrained(
@@ -89,7 +89,7 @@ def prepare_training(args):
 def objective(trial, args):
     # create trial arguments
     args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
-    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64])
+    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64, 128, 256])
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay

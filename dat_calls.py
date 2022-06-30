@@ -139,14 +139,14 @@ ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral
 ####
 #####
 ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_10percent", "../data/viral-phage_1_3/train_10percent"],
-                name='ft_hpo_test2', path='created_data', cap=512, kmer=6, filetype="train",
-                cutlength=150, max_mult=2, perc=50000,
+                name='ft_hpo_test3', path='created_data', cap=1024, kmer=6, filetype="train",
+                cutlength=150, max_mult=4, perc=500000,
                 add_info='')
 
 
 ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
-                name='ft_hpo_test2', path='created_data', cap=512, kmer=6, filetype="dev",
-                cutlength=150, max_mult=2, perc=10000, add_info='')
+                name='ft_hpo_test3', path='created_data', cap=1024, kmer=6, filetype="dev",
+                cutlength=150, max_mult=4, perc=100000, add_info='')
 ####
 
 
