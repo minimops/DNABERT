@@ -18,5 +18,5 @@ python ft_hpo.py \
     --n_process 24 \
     --early_stop 3 \
     --gpu_id 0 \
-    --num_train_epochs 5 \
+    --num_train_epochs 3.0 \
     --fp16
