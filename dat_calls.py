@@ -138,14 +138,15 @@ ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral
                 cutlength=150, max_mult=4, perc=750000, add_info    ='10 percent split with 1024 cap and 4 max mult')
 ####
 #####
-ft_data_process(dirlist=["../data/viral-no-phage_1_3/train", "../data/viral-phage_1_3/train"],
-                name='ft_hpo_test', path='created_data', cap=512, kmer=6, filetype="train",
-                cutlength=150, max_mult=2, perc=20000, add_info='10 percent split with 1024 cap and 4 max mult')
+ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_10percent", "../data/viral-phage_1_3/train_10percent"],
+                name='ft_hpo_test2', path='created_data', cap=512, kmer=6, filetype="train",
+                cutlength=150, max_mult=2, perc=50000,
+                add_info='')
 
 
 ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
-                name='ft_hpo_test', path='created_data', cap=512, kmer=6, filetype="dev",
-                cutlength=150, max_mult=2, perc=7500, add_info='10 percent split with 1024 cap and 4 max mult')
+                name='ft_hpo_test2', path='created_data', cap=512, kmer=6, filetype="dev",
+                cutlength=150, max_mult=2, perc=10000, add_info='')
 ####
 
 
@@ -185,3 +186,11 @@ pt_data_process(dirs_list=["../data/viral-no-phage_1_3/train",
                            "../data/viral-phage_1_3/train"],
                 name='pt_10_eval_stride', path='created_data', kmer=6, ratio=4.7, low_b=36, s=3, upp_b=1000, perc=.1,
                 add_info='full stride 3 eval data, lower bound of 36, upper of 1000')
+
+#####
+token_dat(pred_data_process(["../data/viral-no-phage_1_3/test", "../data/viral-phage_1_3/test"],
+                            cutlength=150, cap=64), name="pred_test_150", path="created_data", kmer=6, s=1)
+
+token_dat(pred_data_process(["../data/viral-no-phage_1_3/test", "../data/viral-phage_1_3/test"],
+                            cutlength=1000, cap=64), name="pred_test_1000", path="created_data", kmer=6, s=1)
+###

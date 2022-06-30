@@ -16,6 +16,7 @@ from transformers import (
 import numpy as np
 import re
 import torch
+import joblib
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from tqdm import tqdm, trange
 
@@ -25,7 +26,7 @@ import optuna
 from optuna.trial import TrialState
 
 DIRNUM = 0
-N_TRAIN_EXAMPLES = 10000
+N_TRAIN_EXAMPLES = 75000
 
 def create_tokenizer(tokenizer_class, args):
     return tokenizer_class.from_pretrained(
@@ -88,7 +89,7 @@ def prepare_training(args):
 def objective(trial, args):
     # create trial arguments
     args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
-    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64, 128])
+    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64])
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
@@ -108,8 +109,8 @@ def objective(trial, args):
     # Create output directory if needed
     if args.local_rank in [-1, 0]:
         global DIRNUM
-        args.output_dir = re.sub(r'\d+$', '', args.output_dir) + str(DIRNUM)
-        os.makedirs(args.output_dir, exist_ok=True)
+        output_dir = args.output_dir + "/run"  + str(DIRNUM)
+        os.makedirs(output_dir, exist_ok=True)
         DIRNUM += 1
 
     # load model
@@ -160,6 +161,7 @@ def objective(trial, args):
         model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16_opt_level)
 
     # train
+    best_score = 0
     global_step = 0
     epochs_trained = 0
     steps_trained_in_current_epoch = 0
@@ -179,15 +181,15 @@ def objective(trial, args):
         epochs_trained, int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0],
     )
 
-    last_auc = 0
     stop_count = 0
+    rep_counter = 0
 
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         for step, batch in enumerate(epoch_iterator):
 
-            # if step * args.train_batch_size >= N_TRAIN_EXAMPLES:
-            #     break
+            if step * args.train_batch_size >= N_TRAIN_EXAMPLES:
+                break
 
             # Skip past any already trained steps if resuming training
             if steps_trained_in_current_epoch > 0:
@@ -230,28 +232,29 @@ def objective(trial, args):
                 # evaluate
                 if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
                     results = evaluate(args, model, tokenizer, global_step)
+                    print("\n\n", results["acc"], "\n")
+                    # early stopping
+                    if results["acc"] < best_score:
+                        stop_count += 1
+                    else:
+                        stop_count = 0
+                        best_score = results["acc"]
+
+                    # stop training when patience count is reached
+                    if stop_count == args.early_stop:
+                        print("\nSTOPPING EARLY\n")
+                        trial.report(results["acc"], rep_counter)
+                        return best_score
 
                     if args.report_steps == -1 or global_step % int(args.report_steps * 64/args.train_batch_size) == 0:
-                        trial.report(results["acc"], global_step)
+                        print("REPORTING\n")
+                        trial.report(results["acc"], rep_counter)
+                        rep_counter += 1
 
                         # Handle pruning based on the intermediate value.
                         if trial.should_prune():
+                            print("\nPRUNING TRIAL\n")
                             raise optuna.exceptions.TrialPruned()
-
-                    # early stopping
-                    if args.early_stop != 0:
-                        # record current auc to perform early stop
-                        if results["acc"] < last_auc:
-                            stop_count += 1
-                        else:
-                            stop_count = 0
-
-                        last_auc = results["acc"]
-                        # stop training when patience count is reached
-                        if stop_count == args.early_stop:
-                            trial.report(results["acc"], global_step)
-                            return results["acc"]
-
         #
         # # write training file
         # logs = {}
@@ -272,7 +275,7 @@ def objective(trial, args):
                 #     writer.write(headers + ",".join(
                 #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
-    return results["acc"]
+    return best_score
 
 
 if __name__ == "__main__":
@@ -376,9 +379,6 @@ if __name__ == "__main__":
     parser.add_argument("--rnn", default="lstm", type=str, help="What kind of RNN to use")
     parser.add_argument("--num_rnn_layer", default=2, type=int, help="Number of rnn layers in dnalong model.")
     parser.add_argument("--rnn_hidden", default=768, type=int, help="Number of hidden unit in a rnn layer.")
-    parser.add_argument(
-        "--num_train_epochs", default=3.0, type=float, help="Total number of training epochs to perform.",
-    )
     parser.add_argument("--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
     parser.add_argument("--warmup_percent", default=0, type=float,
                         help="Linear warmup over warmup_percent*total_steps.")
@@ -391,7 +391,7 @@ if __name__ == "__main__":
         help="Number of updates steps to accumulate before performing a backward/update pass.",
     )
     parser.add_argument("--logging_steps", type=int, default=500, help="Log every X updates steps.")
-    parser.add_argument("--report_steps", type=int, default=500, help="report to trial every X updates steps.")
+    parser.add_argument("--report_steps", type=int, default=-1, help="report to trial every X updates steps.")
     parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
     parser.add_argument(
         "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets",
@@ -418,13 +418,30 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    study = optuna.create_study(direction="maximize",
-                                pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(), patience=2)
+    location = args.output_dir + "/study.pkl"
+
+    study = optuna.create_study(
+        study_name="distributed-example",
+        direction="maximize"
+        , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=2,
+                                                                          n_startup_trials=3),
+                                              patience=1)
+        #,
+        #storage="mysql://example",
+        #load_if_exists=True
+    )
+
+    study = optuna.create_study(direction="maximize"
+                                , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=2,
+                                                                                                  n_startup_trials=3),
+                                                                      patience=1)
                                 )
-    study.optimize(lambda trial: objective(trial, args), n_trials=11, timeout=600)
+    study.optimize(lambda trial: objective(trial, args), n_trials=3, timeout=6000)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+
+    joblib.dump(study, location)
 
     print("Study statistics: ")
     print("  Number of finished trials: ", len(study.trials))
@@ -439,3 +456,5 @@ if __name__ == "__main__":
     print("  Params: ")
     for key, value in trial.params.items():
         print("    {}: {}".format(key, value))
+
+

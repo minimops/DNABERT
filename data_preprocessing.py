@@ -297,7 +297,7 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc
         # split_seq_kmer_list = list2kmer(split_seq_list, kmer)
         # create df
         df = pd.DataFrame({'sequence': split_seq_list,
-                                        'label': label_iter})
+                           'label': label_iter})
         if perc2 is not None:
             df = df.sample(perc2).reset_index()
         cl_df_list.append(df)
@@ -315,7 +315,7 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc
 def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1,
                     perc=None, perc2=None, s=1):
     # TODO missing assert str and len of dirList
-    possible_names = ["train", "dev", "validation", "test"]
+    possible_names = ["train", "dev", "validation"]
     if filetype not in possible_names:
         raise ValueError("filetype must be one of the following %s" % ", ".join(possible_names))
     if filetype == "validation":
@@ -346,7 +346,7 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
     ft_pd.to_csv(location + "/" + "interim_" + filetype + ".tsv", sep='\t', index=False)
 
     ft_pd["sequence"] = ft_pd.apply(lambda row: seq2kmer(row[0], kmer, s), axis=1)
-    ft_pd.to_csv(location + "/" +  filetype + ".tsv", sep='\t', index=False)
+    ft_pd.to_csv(location + "/" + filetype + ".tsv", sep='\t', index=False)
 
     lines.extend(["%s file:" % filetype,
                   "Left out sequences due to length: %s of classes %s"
@@ -359,3 +359,54 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
                   "\n"])
     # write info file
     create_data_info_file(location, lines)
+
+
+def pred_data_process(dirlist, cap, cutlength):
+    label_iter = 0
+    df_list = []
+    for d in dirlist:
+        seqs = removeNAseq(parse_fasta(d))
+
+        res = []
+        for seq in seqs:
+            # if file smaller than cap * cutlength, sample starting position to be between 0 and 0.1 * len
+            if len(seq) < cap * cutlength:
+                start = int(round(numpy.random.uniform(0, .1), 2) * len(seq))
+                cuts = [seq[x:x + cutlength] for x in range(start, len(seq) + 1 - cutlength, cutlength)]
+            # if file greater than that, sample cap times a starting pos so that non overlapping
+            else:
+                cuts = rand_parts(seq, cap, cutlength)
+
+            res.extend(cuts)
+
+        df_list.append(pd.DataFrame({'sequence': res,
+                                     'label': label_iter}))
+        label_iter += 1
+
+    # all classes together
+    full_df = pd.concat(df_list)
+    # shuffle
+    full_df = full_df.sample(frac=1).reset_index(drop=True)
+
+    # full_df.to_csv(location + "/" + "interim_dev.tsv", sep='\t', index=False)
+
+    return full_df
+
+def token_dat(df, name, path, kmer=6, s=1):
+    location = create_dir(name, path)
+    df.to_csv(location + "/" + "interim_dev.tsv", sep='\t', index=False)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], kmer, s), axis=1)
+    df.to_csv(location + "/dev.tsv", sep='\t', index=False)
+
+
+# directly taken from https://stackoverflow.com/a/18641853
+def rand_parts(seq, n, l):
+    indices = range(len(seq) - (l - 1) * n)
+    result = []
+    offset = 0
+    for i in sorted(random.sample(indices, n)):
+        i += offset
+        result.append(seq[i:i + l])
+        offset += l - 1
+    return result
+
