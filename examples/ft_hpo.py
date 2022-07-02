@@ -119,6 +119,7 @@ def objective(trial, args):
     if args.local_rank in [-1, 0]:
         global DIRNUM
         output_dir = args.output_dir + "/run"  + str(DIRNUM)
+        run_dir = "run" + str(DIRNUM)
         os.makedirs(output_dir, exist_ok=True)
         DIRNUM += 1
 
@@ -193,7 +194,7 @@ def objective(trial, args):
 
     stop_count = 0
     rep_counter = 0
-    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir=output_dir)
+    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
     print("\n\n", results["acc"], "\n")
     print("REPORTING\n")
     trial.report(results["acc"], rep_counter)
@@ -247,7 +248,7 @@ def objective(trial, args):
 
                 # evaluate
                 if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
-                    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir=output_dir)
+                    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
                     print("\n\n", results["acc"], "\n")
                     # early stopping
                     if results["acc"] < best_score:
@@ -291,7 +292,7 @@ def objective(trial, args):
                 #     writer.write(headers + ",".join(
                 #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
-    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir=output_dir)
+    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
     if results["acc"] > best_score:
         best_score = results["acc"]
     print("REPORTING\n")
@@ -445,7 +446,7 @@ if __name__ == "__main__":
     study = optuna.create_study(
         study_name="distributed-example",
         direction="maximize"
-        , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=2,
+        , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=3,
                                                                           n_startup_trials=3),
                                               patience=2)
 
