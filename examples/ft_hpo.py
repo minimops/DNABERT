@@ -15,6 +15,7 @@ from transformers import (
 
 import numpy as np
 import re
+from timeit import default_timer as timer
 import torch
 import joblib
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
@@ -96,8 +97,13 @@ def objective(trial, args):
     # B1, B2
     # dropout probabilities
 
+
+
     # map ints to percentage
     args.warmup_percent = args.warmup_percent * 0.05
+
+
+
 
     # Setup CUDA, GPU & distributed training
     torch.cuda.set_device(args.gpu_id)
@@ -161,6 +167,7 @@ def objective(trial, args):
         model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16_opt_level)
 
     # train
+    t_start = timer()
     best_score = 0
     global_step = 0
     epochs_trained = 0
@@ -231,7 +238,8 @@ def objective(trial, args):
 
                 # evaluate
                 if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
-                    results = evaluate(args, model, tokenizer, global_step)
+                    t_int = timer()
+                    results = evaluate(args, model, tokenizer, global_step, timestamp=t_int - t_start)
                     print("\n\n", results["acc"], "\n")
                     # early stopping
                     if results["acc"] < best_score:
@@ -274,6 +282,12 @@ def objective(trial, args):
                 # with open(args.output_dir + "/tr_args.csv", "a") as writer:
                 #     writer.write(headers + ",".join(
                 #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
+
+        results = evaluate(args, model, tokenizer, global_step)
+        if results["acc"] > best_score:
+            best_score = results["acc"]
+        print("REPORTING\n")
+        trial.report(results["acc"], rep_counter)
 
     return best_score
 

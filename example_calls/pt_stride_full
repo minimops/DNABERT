@@ -35,4 +35,5 @@ python run_pretrain.py \
     --n_process 32 \
     --fp16 \
     --mask_like 3 \
+    --should_continue \
     --add_run_info 'full stride 3 pt'

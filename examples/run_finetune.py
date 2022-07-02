@@ -393,7 +393,7 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 
-def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
+def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, timestamp=-1):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
@@ -482,9 +482,9 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True):
                 global_step = f.read()
         eval_result = ""
         if not exists(output_eval_file):
-            eval_result = ",".join(["global_step", "eval_loss"]) + "," + ",".join(sorted(result.keys())) \
+            eval_result = ",".join(["global_step", "eval_loss", "timestamp"]) + "," + ",".join(sorted(result.keys())) \
                           + "\n"
-        eval_result = eval_result + ",".join([str(x) for x in [global_step, eval_loss]]) + ","
+        eval_result = eval_result + ",".join([str(x) for x in [global_step, eval_loss, int(timestamp)]]) + ","
 
         with open(output_eval_file, "a") as writer:
 
