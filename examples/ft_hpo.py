@@ -90,7 +90,7 @@ def prepare_training(args):
 def objective(trial, args):
     # create trial arguments
     args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
-    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [32, 64, 128, 256])
+    args.per_gpu_train_batch_size = trial.suggest_int("per_gpu_train_batch_size", 1, 4)
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
@@ -102,6 +102,7 @@ def objective(trial, args):
 
     # map ints to percentage
     args.warmup_percent = args.warmup_percent * 0.05
+    args.per_gpu_train_batch_size = args.per_gpu_train_batch_size * 32
     args.weight_decay = 10 ** args.weight_decay
     args.hidden_dropout_prob = args.hidden_dropout_prob * 0.1
 
@@ -195,9 +196,10 @@ def objective(trial, args):
 
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
+        print(len(epoch_iterator))
         for step, batch in enumerate(epoch_iterator):
 
-            if step * args.train_batch_size >= N_TRAIN_EXAMPLES * args.train_batch_size:
+            if step >= N_TRAIN_EXAMPLES * len(epoch_iterator):
                 break
 
             # Skip past any already trained steps if resuming training
