@@ -240,7 +240,7 @@ def objective(trial, args):
 
                 # evaluate
                 if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
-                    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir)
+                    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir=output_dir)
                     print("\n\n", results["acc"], "\n")
                     # early stopping
                     if results["acc"] < best_score:
@@ -284,7 +284,7 @@ def objective(trial, args):
                 #     writer.write(headers + ",".join(
                 #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
-    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir)
+    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir=output_dir)
     if results["acc"] > best_score:
         best_score = results["acc"]
     print("REPORTING\n")
