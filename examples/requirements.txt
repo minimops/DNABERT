@@ -10,5 +10,3 @@ pandas
 pybedtools
 sentencepiece==0.1.91
 optuna
-mysql-python
-mysqlclient

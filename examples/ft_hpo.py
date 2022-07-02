@@ -90,11 +90,10 @@ def prepare_training(args):
 def objective(trial, args):
     # create trial arguments
     args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
-    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [16, 32, 64, 128, 256])
+    args.per_gpu_train_batch_size = trial.suggest_categorical("per_gpu_train_batch_size", [32, 64, 128, 256])
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
-    # B1, B2
     # dropout probabilities
 
 
@@ -445,7 +444,7 @@ if __name__ == "__main__":
       #  storage="mysql://example",
      #   load_if_exists=True
     )
-    study.optimize(lambda trial: objective(trial, args), n_trials=3, timeout=6000)
+    study.optimize(lambda trial: objective(trial, args), n_trials=6)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
