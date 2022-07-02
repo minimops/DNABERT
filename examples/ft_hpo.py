@@ -27,7 +27,7 @@ import optuna
 from optuna.trial import TrialState
 
 DIRNUM = 0
-N_TRAIN_EXAMPLES = 750000
+N_TRAIN_EXAMPLES = .75
 
 def create_tokenizer(tokenizer_class, args):
     return tokenizer_class.from_pretrained(
@@ -94,13 +94,16 @@ def objective(trial, args):
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
+    args.weight_decay = trial.suggest_int("weight_decay", 2, 4)
     # dropout probabilities
+    args.hidden_dropout_prob = trial.suggest_int("hidden_dropout_prob", 1, 4)
 
 
 
     # map ints to percentage
     args.warmup_percent = args.warmup_percent * 0.05
-
+    args.weight_decay = 10 ** args.weight_decay
+    args.hidden_dropout_prob = args.hidden_dropout_prob * 0.1
 
 
 
@@ -194,7 +197,7 @@ def objective(trial, args):
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         for step, batch in enumerate(epoch_iterator):
 
-            if step * args.train_batch_size >= N_TRAIN_EXAMPLES:
+            if step * args.train_batch_size >= N_TRAIN_EXAMPLES * args.train_batch_size:
                 break
 
             # Skip past any already trained steps if resuming training
@@ -237,8 +240,7 @@ def objective(trial, args):
 
                 # evaluate
                 if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
-                    t_int = timer()
-                    results = evaluate(args, model, tokenizer, global_step, timestamp=t_int - t_start)
+                    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir)
                     print("\n\n", results["acc"], "\n")
                     # early stopping
                     if results["acc"] < best_score:
@@ -282,11 +284,11 @@ def objective(trial, args):
                 #     writer.write(headers + ",".join(
                 #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
-        results = evaluate(args, model, tokenizer, global_step)
-        if results["acc"] > best_score:
-            best_score = results["acc"]
-        print("REPORTING\n")
-        trial.report(results["acc"], rep_counter)
+    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir)
+    if results["acc"] > best_score:
+        best_score = results["acc"]
+    print("REPORTING\n")
+    trial.report(results["acc"], rep_counter)
 
     return best_score
 
@@ -438,13 +440,13 @@ if __name__ == "__main__":
         direction="maximize"
         , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=2,
                                                                           n_startup_trials=3),
-                                              patience=1)
+                                              patience=2)
 
     # ,
       #  storage="mysql://example",
      #   load_if_exists=True
     )
-    study.optimize(lambda trial: objective(trial, args), n_trials=6)
+    study.optimize(lambda trial: objective(trial, args), n_trials=50, timeout=259000)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])

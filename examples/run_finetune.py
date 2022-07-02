@@ -393,10 +393,12 @@ def train(args, train_dataset, model, tokenizer):
     return global_step, tr_loss / global_step
 
 
-def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, timestamp=-1):
+def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, timestamp=-1, new_dir=None):
     # Loop to handle MNLI double evaluation (matched, mis-matched)
     eval_task_names = ("mnli", "mnli-mm") if args.task_name == "mnli" else (args.task_name,)
     eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
+    if new_dir is not None:
+        eval_outputs_dirs = new_dir
     if args.task_name[:3] == "dna":
         softmax = torch.nn.Softmax(dim=1)
         
@@ -478,13 +480,13 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
 
         # write the first line of eval_results file
         if str(global_step) == "":
-            with open(args.output_dir + "/total_steps.txt") as f:
+            with open(eval_output_dir + "/total_steps.txt") as f:
                 global_step = f.read()
         eval_result = ""
         if not exists(output_eval_file):
-            eval_result = ",".join(["global_step", "eval_loss", "timestamp"]) + "," + ",".join(sorted(result.keys())) \
+            eval_result = ",".join(["global_step", "eval_loss", "timestamp_in_m"]) + "," + ",".join(sorted(result.keys())) \
                           + "\n"
-        eval_result = eval_result + ",".join([str(x) for x in [global_step, eval_loss, int(timestamp)]]) + ","
+        eval_result = eval_result + ",".join([str(x) for x in [global_step, eval_loss, round(timestamp / 60, 2)]]) + ","
 
         with open(output_eval_file, "a") as writer:
 

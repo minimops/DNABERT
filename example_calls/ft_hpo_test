@@ -14,7 +14,6 @@ python ft_hpo.py \
     --output_dir $OUTPUT_PATH \
     --logging_steps 2500 \
     --hidden_dropout_prob 0.2 \
-    --weight_decay 0.01 \
     --n_process 24 \
     --early_stop 4 \
     --gpu_id 0 \
