@@ -12,7 +12,7 @@ python ft_hpo.py \
     --max_seq_length 150 \
     --per_gpu_eval_batch_size=512 \
     --output_dir $OUTPUT_PATH \
-    --logging_steps 3000 \
+    --logging_steps 12000 \
     --n_process 32 \
     --early_stop 4 \
     --gpu_id 0 \

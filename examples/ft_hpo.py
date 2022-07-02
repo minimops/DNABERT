@@ -193,6 +193,11 @@ def objective(trial, args):
 
     stop_count = 0
     rep_counter = 0
+    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, new_dir=output_dir)
+    print("\n\n", results["acc"], "\n")
+    print("REPORTING\n")
+    trial.report(results["acc"], rep_counter)
+    rep_counter += 1
 
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
