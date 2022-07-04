@@ -194,11 +194,6 @@ def objective(trial, args):
 
     stop_count = 0
     rep_counter = 0
-    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
-    print("\n\n", results["acc"], "\n")
-    print("REPORTING\n")
-    trial.report(results["acc"], rep_counter)
-    rep_counter += 1
 
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
@@ -444,7 +439,7 @@ if __name__ == "__main__":
     location = args.output_dir + "/study.pkl"
 
     study = optuna.create_study(
-        study_name="distributed-example",
+        study_name="testing",
         direction="maximize"
         , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=3,
                                                                           n_startup_trials=3),
