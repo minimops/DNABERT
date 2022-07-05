@@ -433,7 +433,6 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
         for batch in tqdm(eval_dataloader, desc="Evaluating"):
             model.eval()
             batch = tuple(t.to(args.device) for t in batch)
-            print("\n\n%s\n" % batch)
             with torch.no_grad():
                 inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
 

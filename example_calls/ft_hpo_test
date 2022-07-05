@@ -1,7 +1,7 @@
 export KMER=6
-export MODEL_PATH=$PROJECT/models/mask8_100k_use
+export MODEL_PATH=$PROJECT/models/dnabert6
 export DATA_PATH=$PROJECT/created_data/ft_hpo_test3
-export OUTPUT_PATH=$PROJECT/Test_runs/ft_hpo_test8
+export OUTPUT_PATH=$PROJECT/Test_runs/ft_hpo_test9
 
 python ft_hpo.py \
     --model_type dna \
