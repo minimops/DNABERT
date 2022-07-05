@@ -437,11 +437,13 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
 
                 print("\n\n")
-                print("label eq 0 len: \n %s" % len(inputs["labels"] == 0))
+                print("label eq 0 len: \n %s" % (inputs["labels"] == 0).sum())
                 print("\n")
-                print("label eq 1 len: \n %s" % len(inputs["labels"] == 1))
+                print("label eq 1 len: \n %s" % (inputs["labels"] == 1).sum())
                 print("\n")
                 print("input label len: \n %s" % len(inputs["labels"]))
+                if (inputs["labels"] == 0).sum() + (inputs["labels"] == 1).sum() != len(inputs["labels"]):
+                    print("\nPROBLEM here, unaccounted labels")
                 print("\n\n")
 
                 if args.model_type != "distilbert":
@@ -461,7 +463,11 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
                 print("\n preds in rf: \n %s \n" % preds)
+                print("\n ones in preds: \n %s \n" % (preds == 1).sum())
+                print("\n zeros in preds: \n %s \n" % (preds == 0).sum())
                 print("\n out_label in rf: \n %s \n" % out_label_ids)
+                print("\n ones in labels: \n %s \n" % (out_label_ids == 1).sum())
+                print("\n zeros in labels: \n %s \n" % (out_label_ids == 0).sum())
 
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":

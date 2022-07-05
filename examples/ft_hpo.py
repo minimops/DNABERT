@@ -90,7 +90,7 @@ def prepare_training(args):
 def objective(trial, args):
     # create trial arguments
     args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
-    args.per_gpu_train_batch_size = trial.suggest_int("per_gpu_train_batch_size", 1, 4)
+    args.per_gpu_train_batch_size = trial.suggest_int("per_gpu_train_batch_size", 5, 8)
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
@@ -102,7 +102,7 @@ def objective(trial, args):
 
     # map ints to percentage
     args.warmup_percent = args.warmup_percent * 0.05
-    args.per_gpu_train_batch_size = args.per_gpu_train_batch_size * 32
+    args.per_gpu_train_batch_size = 2 ** args.per_gpu_train_batch_size
     args.weight_decay = 10 ** args.weight_decay
     args.hidden_dropout_prob = args.hidden_dropout_prob * 0.1
 
@@ -297,6 +297,8 @@ def objective(trial, args):
 
 
 if __name__ == "__main__":
+
+    torch.set_printoptions(threshold=10_000)
 
     parser = argparse.ArgumentParser()
 
