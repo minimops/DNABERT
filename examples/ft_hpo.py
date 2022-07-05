@@ -171,7 +171,7 @@ def objective(trial, args):
         model, optimizer = amp.initialize(model, optimizer, opt_level=args.fp16_opt_level)
 
     # train
-    t_start = timer()
+
     best_score = 0
     global_step = 0
     epochs_trained = 0
@@ -194,7 +194,7 @@ def objective(trial, args):
 
     stop_count = 0
     rep_counter = 0
-
+    t_start = timer()
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         print(len(epoch_iterator))

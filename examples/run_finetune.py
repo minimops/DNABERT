@@ -433,9 +433,18 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
         for batch in tqdm(eval_dataloader, desc="Evaluating"):
             model.eval()
             batch = tuple(t.to(args.device) for t in batch)
-
+            print("\n\n%s\n" % batch)
             with torch.no_grad():
                 inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+
+                print("\n\n")
+                print("label eq 0 len: \n %s" % len(inputs["labels"] == 0))
+                print("\n")
+                print("label eq 1 len: \n %s" % len(inputs["labels"] == 1))
+                print("\n")
+                print("input label len: \n %s" % len(inputs["labels"]))
+                print("\n\n")
+
                 if args.model_type != "distilbert":
                     inputs["token_type_ids"] = (
                         batch[2] if args.model_type in TOKEN_ID_GROUP else None
@@ -452,6 +461,9 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
+                print("\n preds in rf: \n %s \n" % preds)
+                print("\n out_label in rf: \n %s \n" % out_label_ids)
+
         eval_loss = eval_loss / nb_eval_steps
         if args.output_mode == "classification":
             if args.task_name[:3] == "dna" and args.task_name != "dnasplice":
@@ -459,6 +471,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                     probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
                 else:
                     probs = softmax(torch.tensor(preds, dtype=torch.float32))[:,1].numpy()
+                    print("\n %s \n" % probs)
             elif args.task_name == "dnasplice":
                 probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
             preds = np.argmax(preds, axis=1)

@@ -9,7 +9,7 @@ python ft_hpo.py \
     --model_name_or_path $MODEL_PATH \
     --task_name dnaprom \
     --data_dir $DATA_PATH \
-    --max_seq_length 150 \
+    --max_seq_length 147 \
     --per_gpu_eval_batch_size=1024 \
     --output_dir $OUTPUT_PATH \
     --logging_steps 10000 \

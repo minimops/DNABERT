@@ -1,0 +1,39 @@
+export KMER=6
+export TRAIN_FILE=$PROJECT/created_data/pt_stride_full/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_10_eval_stride/full_kmers.txt
+export SOURCE=../
+export OUTPUT_PATH=$PROJECT/models/pt_stride_retry
+
+python run_pretrain.py \
+    --output_dir $OUTPUT_PATH \
+    --model_type=dna \
+    --tokenizer_name=dna$KMER \
+    --config_name=$SOURCE/src/transformers/dnabert-config/bert-config-l340/config.json \
+    --do_train \
+    --train_data_file=$TRAIN_FILE \
+    --do_eval \
+    --eval_data_file=$TEST_FILE \
+    --mlm \
+    --gradient_accumulation_steps 4 \
+    --per_gpu_train_batch_size 100 \
+    --per_gpu_eval_batch_size 80 \
+    --save_steps 2000 \
+    --save_total_limit 20 \
+    --max_steps 200000 \
+    --evaluate_during_training \
+    --logging_steps 2000 \
+    --line_by_line \
+    --learning_rate 1e-3 \
+    --block_size 340 \
+    --adam_epsilon 1e-6 \
+    --weight_decay 0.01 \
+    --beta1 0.9 \
+    --beta2 0.98 \
+    --mlm_probability 0.05 \
+    --warmup_steps 20000 \
+    --overwrite_output_dir \
+    --n_process 32 \
+    --fp16 \
+    --mask_like 3 \
+    --should_continue \
+    --add_run_info 'full stride 3 pt'
