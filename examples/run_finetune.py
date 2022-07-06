@@ -436,12 +436,12 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
             with torch.no_grad():
                 inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
 
-                # print("\n\n")
-                # print("label eq 0 len: \n %s" % (inputs["labels"] == 0).sum())
-                # print("\n")
-                # print("label eq 1 len: \n %s" % (inputs["labels"] == 1).sum())
-                # print("\n")
-                # print("input label len: \n %s" % len(inputs["labels"]))
+                print("\n\n")
+                print("label eq 0 len: \n %s" % (inputs["labels"] == 0).sum())
+                print("\n")
+                print("label eq 1 len: \n %s" % (inputs["labels"] == 1).sum())
+                print("\n")
+                print("\n\ninput label len: \n %s" % len(inputs["labels"]))
                 if (inputs["labels"] == 0).sum() + (inputs["labels"] == 1).sum() != len(inputs["labels"]):
                     print("\nPROBLEM here, unaccounted labels")
                 # print("\n\n")
