@@ -105,9 +105,13 @@ if _has_sklearn:
             return acc_f1_mcc_auc_aupr_pre_rec(preds, labels, probs)
         elif task_name == "dnaprom":
             # print("\n predictions: \n %s \n labels: \n %s \n" % (preds, labels))
-            print("\n predictions: \n 0s: %s ; 1s: %s" % ((preds == 0).sum(), (preds == 0).sum()))
-            print("\n labels: \n 0s: %s ; 1s: %s" % ((labels == 0).sum(), (labels == 0).sum()))
-            return acc_f1_mcc_auc_pre_rec(preds, labels, probs)
+            with warnings.catch_warnings(record=True) as w:
+                res = acc_f1_mcc_auc_pre_rec(preds, labels, probs)
+                if len(w):
+                    print("\n predictions: \n 0s: %s ; 1s: %s" % ((preds == 0).sum(), (preds == 0).sum()))
+                    print("\n labels: \n 0s: %s ; 1s: %s" % ((labels == 0).sum(), (labels == 0).sum()))
+
+            return res
            #  return {"acc": simple_accuracy(preds, labels)}
         elif task_name == "dnasplice":
             return acc_f1_mcc_auc_pre_rec(preds, labels, probs)
