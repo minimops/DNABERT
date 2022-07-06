@@ -17,6 +17,7 @@
 try:
     from scipy.stats import pearsonr, spearmanr
     import numpy as np
+    import warnings
     from sklearn.metrics import matthews_corrcoef, precision_score, recall_score, f1_score, roc_auc_score, average_precision_score
 
     _has_sklearn = True
