@@ -436,14 +436,17 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
             with torch.no_grad():
                 inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
 
-                print("\n\n")
-                print("label eq 0 len: \n %s" % (inputs["labels"] == 0).sum())
-                print("\n")
-                print("label eq 1 len: \n %s" % (inputs["labels"] == 1).sum())
-                print("\n")
-                print("\n\ninput label len: \n %s" % len(inputs["labels"]))
+                # print("\n\n")
+                # print("label eq 0 len: \n %s" % (inputs["labels"] == 0).sum())
+                # print("\n")
+                # print("label eq 1 len: \n %s" % (inputs["labels"] == 1).sum())
+                # print("\n")
+                # print("\n\ninput label len: \n %s" % len(inputs["labels"]))
                 if (inputs["labels"] == 0).sum() + (inputs["labels"] == 1).sum() != len(inputs["labels"]):
                     print("\nPROBLEM here, unaccounted labels")
+
+                if (inputs["labels"] == 1).sum() - (inputs["labels"] == 0).sum() > len(inputs["labels"]) * 0.2:
+                    print("\nWARN here, label difference of >20%")
                 # print("\n\n")
 
                 if args.model_type != "distilbert":
@@ -462,6 +465,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
+
                 # print("\n preds in rf: \n %s \n" % preds)
                 # print("\n out_label in rf: \n %s \n" % out_label_ids)
                 # print("\n ones in labels: \n %s \n" % (out_label_ids == 1).sum())
@@ -478,6 +482,8 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
             elif args.task_name == "dnasplice":
                 probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
             preds = np.argmax(preds, axis=1)
+            if (preds == 1).sum() - (preds == 0).sum() > len(preds) * 0.2:
+                print("\nWARN here, prediction label difference of >20%")
         elif args.output_mode == "regression":
             preds = np.squeeze(preds)
         if args.do_ensemble_pred:
