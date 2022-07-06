@@ -299,7 +299,7 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc
         df = pd.DataFrame({'sequence': split_seq_list,
                            'label': label_iter})
         if perc2 is not None:
-            df = df.sample(perc2).reset_index()
+            df = df.sample(perc2).reset_index(drop=True)
         cl_df_list.append(df)
         lo_counter_list.append(lo_counter)
         label_iter += 1
@@ -309,7 +309,7 @@ def ft_df_creation(class_dirs, cap, cutlength, kmer, max_mult=1, perc=None, perc
     full_df = full_df.sample(frac=1).reset_index(drop=True)
     # if perc2 is not None:
     #     full_df = full_df.sample(perc2).reset_index()
-    return full_df, lo_counter_list
+    return full_df, cl_df_list, lo_counter_list
 
 
 def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train', add_info='', labels=None, max_mult=1,
@@ -341,7 +341,7 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
     lines.append(add_info + "\n")
 
     # write train/test file
-    ft_pd, lo_counter = ft_df_creation(class_dirs=dirlist, cap=cap, cutlength=cutlength,
+    ft_pd, df_list, lo_counter = ft_df_creation(class_dirs=dirlist, cap=cap, cutlength=cutlength,
                                        kmer=kmer, max_mult=max_mult, perc=perc, perc2=perc2)
     ft_pd.to_csv(location + "/" + "interim_" + filetype + ".tsv", sep='\t', index=False)
 
@@ -359,6 +359,7 @@ def ft_data_process(dirlist, name, path, cap, cutlength, kmer, filetype='train',
                   "\n"])
     # write info file
     create_data_info_file(location, lines)
+    return df_list
 
 
 def pred_data_process(dirlist, cap, cutlength):

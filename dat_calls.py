@@ -194,3 +194,49 @@ token_dat(pred_data_process(["../data/viral-no-phage_1_3/test", "../data/viral-p
 token_dat(pred_data_process(["../data/viral-no-phage_1_3/test", "../data/viral-phage_1_3/test"],
                             cutlength=1000, cap=64), name="pred_test_1000", path="created_data", kmer=6, s=1)
 ###
+
+
+#####
+# ~8M examples for 10percent of labels finetuning
+dfs_10per = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_10percent", "../data/viral-phage_1_3/train_10percent"],
+                name='ft_10p_s1', path='created_data', cap=4500, kmer=6, filetype="train",
+                cutlength=150, max_mult=2, perc=4194304,
+                add_info='')
+
+dfs2 = dfs_10per
+import pickle
+with open('created_data/ft_10_150.pkl', 'wb') as outp:
+    pickle.dump(dfs2, outp, pickle.HIGHEST_PROTOCOL)
+
+# creates ~2M hpo examples
+num = 1048576 # 2^x
+dfs = []
+for df in dfs_10per:
+    df = df.sample(num).reset_index(drop=True)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=1), axis=1)
+    dfs.append(df)
+df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
+df.to_csv("created_data/ft_hpo_10/" + "train.tsv", sep='\t', index=False)
+
+
+# ~1.2M examples to validate on
+dfs_10_dev = ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
+                name='ft_10p_s1', path='created_data', cap=256, kmer=6, filetype="dev",
+                cutlength=150, max_mult=1, perc=614400,
+                add_info='')
+
+dfs3 = dfs_10_dev
+import pickle
+with open('created_data/ft_150_dev.pkl', 'wb') as outp:
+    pickle.dump(dfs3, outp, pickle.HIGHEST_PROTOCOL)
+
+# creates ~750k examples for hpo
+num = 378880 # *2 divisbible by 2048
+dfs = []
+for df in dfs_10_dev:
+    df = df.sample(num).reset_index(drop=True)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=1), axis=1)
+    dfs.append(df)
+df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
+df.to_csv("created_data/ft_hpo_10/" + "dev.tsv", sep='\t', index=False)
+####

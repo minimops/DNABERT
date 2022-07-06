@@ -1,7 +1,7 @@
 export KMER=6
 export MODEL_PATH=$PROJECT/models/dnabert6
-export DATA_PATH=$PROJECT/created_data/ft_hpo_150
-export OUTPUT_PATH=$PROJECT/Test_runs/ft_hpo_dnabert6_150
+export DATA_PATH=$PROJECT/created_data/ft_hpo_10
+export OUTPUT_PATH=$PROJECT/models/ft_hpo/dnabert6_hpo
 
 python ft_hpo.py \
     --model_type dna \
@@ -10,9 +10,9 @@ python ft_hpo.py \
     --task_name dnaprom \
     --data_dir $DATA_PATH \
     --max_seq_length 147 \
-    --per_gpu_eval_batch_size=1024 \
+    --per_gpu_eval_batch_size 2048 \
     --output_dir $OUTPUT_PATH \
-    --logging_steps 10000 \
+    --logging_steps 3000 \
     --n_process 32 \
     --early_stop 4 \
     --gpu_id 0 \

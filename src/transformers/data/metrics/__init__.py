@@ -104,7 +104,7 @@ if _has_sklearn:
         elif task_name in ["dna690", "dnapair"]:
             return acc_f1_mcc_auc_aupr_pre_rec(preds, labels, probs)
         elif task_name == "dnaprom":
-            print("\n predictions: \n %s \n labels: \n %s \n" % (preds, labels))
+            # print("\n predictions: \n %s \n labels: \n %s \n" % (preds, labels))
             return acc_f1_mcc_auc_pre_rec(preds, labels, probs)
            #  return {"acc": simple_accuracy(preds, labels)}
         elif task_name == "dnasplice":
