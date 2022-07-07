@@ -116,7 +116,7 @@ def objective(trial, args):
     # Create output directory if needed
     if args.local_rank in [-1, 0]:
         global DIRNUM
-        output_dir = args.output_dir + "/run" + str(DIRNUM)
+        output_dir = args.output_dir + "/run_" + str(args.gpu_id) + "_" + str(DIRNUM)
         run_dir = "run" + str(DIRNUM)
         os.makedirs(output_dir, exist_ok=True)
         DIRNUM += 1
