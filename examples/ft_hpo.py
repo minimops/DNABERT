@@ -117,7 +117,7 @@ def objective(trial, args):
     if args.local_rank in [-1, 0]:
         global DIRNUM
         output_dir = args.output_dir + "/run_" + str(args.gpu_id) + "_" + str(DIRNUM)
-        run_dir = "run" + str(DIRNUM)
+        #run_dir = "run" + str(DIRNUM)
         os.makedirs(output_dir, exist_ok=True)
         DIRNUM += 1
 
@@ -245,7 +245,7 @@ def objective(trial, args):
 
                 # evaluate
                 if global_step % int(args.logging_steps * 64 / args.train_batch_size) == 0:
-                    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
+                    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=output_dir)
                     print("\n\n", results["acc"], "\n")
                     # early stopping
                     if results["acc"] <= best_score:
@@ -291,7 +291,7 @@ def objective(trial, args):
         #     writer.write(headers + ",".join(
         #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
-    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
+    results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=output_dir)
     if results["acc"] > best_score:
         best_score = results["acc"]
     print("REPORTING\n")
