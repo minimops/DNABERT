@@ -86,6 +86,11 @@ def prepare_training(args):
 
     model = get_model(model_class, config, args)
 
+    # freeze layers
+    if args.freeze:
+        for param in model.bert.parameters():
+            param.requires_grad = False
+
     return config, tokenizer, model
 
 
@@ -362,7 +367,7 @@ if __name__ == "__main__":
         help="The output directory where the model predictions and checkpoints will be written.",
     )
     # Other parameters
-    # parser.add_argument("--freeze", action="store_true", help="Freeze Bert layers except fo the classification one")
+    parser.add_argument("--freeze", action="store_true", help="Freeze Bert layers except fo the classification one")
     parser.add_argument(
         "--config_name", default="", type=str, help="Pretrained config name or path if not the same as model_name",
     )

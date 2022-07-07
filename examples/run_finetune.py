@@ -465,7 +465,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 preds = logits.detach().cpu().numpy()
                 out_label_ids = inputs["labels"].detach().cpu().numpy()
             else:
-                print("\npreds in batch\n%s" % preds)
+                # print("\npreds in batch\n%s" % preds)
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
