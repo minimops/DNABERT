@@ -1,7 +1,7 @@
 export KMER=6
-export MODEL_PATH=$PROJECT/models/mask8_100k_use
+export MODEL_PATH=$PROJECT/models/dnabert6
 export DATA_PATH=$PROJECT/created_data/ft_hpo_10
-export OUTPUT_PATH=$PROJECT/models/ft_hpo/mask8_hpo2
+export OUTPUT_PATH=$PROJECT/models/ft_hpo/dnabert_test
 
 python ft_hpo.py \
     --model_type dna \
@@ -17,5 +17,5 @@ python ft_hpo.py \
     --early_stop 4 \
     --gpu_id 0 \
     --num_train_epochs 6.0 \
-    --fp16
-    --study_name test
+    --fp16 \
+    --study_name dnabert_tests

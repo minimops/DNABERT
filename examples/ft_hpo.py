@@ -453,7 +453,7 @@ if __name__ == "__main__":
     location = args.output_dir + "/study.pkl"
 
     study = optuna.create_study(
-        study_name="testing",
+        study_name=args.study_name,
         direction="maximize"
         , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=3,
                                                                           n_startup_trials=3),
