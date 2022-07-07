@@ -459,6 +459,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
             if preds is None:
+                print("\npreds is none")
                 preds = logits.detach().cpu().numpy()
                 out_label_ids = inputs["labels"].detach().cpu().numpy()
             else:
@@ -484,6 +485,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
             preds = np.argmax(preds, axis=1)
             if (preds == 1).sum() - (preds == 0).sum() > len(preds) * 0.2:
                 print("\nWARN here, prediction label difference of >20%")
+                print("\npreds:\n0s: %s\n1s: %s" % ((preds == 0).sum(), (preds == 1).sum()))
         elif args.output_mode == "regression":
             preds = np.squeeze(preds)
         if args.do_ensemble_pred:

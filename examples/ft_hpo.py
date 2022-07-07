@@ -12,7 +12,8 @@ from transformers import (
     DNATokenizer,
     get_linear_schedule_with_warmup,
 )
-
+import pandas as pd
+from sql_db import create_connection
 import numpy as np
 import re
 from timeit import default_timer as timer
@@ -28,6 +29,7 @@ from optuna.trial import TrialState
 
 DIRNUM = 0
 N_TRAIN_EXAMPLES = .75
+
 
 def create_tokenizer(tokenizer_class, args):
     return tokenizer_class.from_pretrained(
@@ -98,15 +100,11 @@ def objective(trial, args):
     # dropout probabilities
     args.hidden_dropout_prob = trial.suggest_int("hidden_dropout_prob", 1, 4)
 
-
-
     # map ints to percentage
     args.warmup_percent = args.warmup_percent * 0.05
     args.per_gpu_train_batch_size = 2 ** args.per_gpu_train_batch_size
     args.weight_decay = 10 ** args.weight_decay
     args.hidden_dropout_prob = args.hidden_dropout_prob * 0.1
-
-
 
     # Setup CUDA, GPU & distributed training
     torch.cuda.set_device(args.gpu_id)
@@ -118,10 +116,14 @@ def objective(trial, args):
     # Create output directory if needed
     if args.local_rank in [-1, 0]:
         global DIRNUM
-        output_dir = args.output_dir + "/run"  + str(DIRNUM)
+        output_dir = args.output_dir + "/run" + str(DIRNUM)
         run_dir = "run" + str(DIRNUM)
         os.makedirs(output_dir, exist_ok=True)
         DIRNUM += 1
+
+    with open(output_dir + "/opt_args.csv", "w") as f:
+        f.write(", ".join(trial.params.keys()) + "\n")
+        f.write(", ".join([str(x) for x in trial.params.values()]))
 
     # load model
     config, tokenizer, model = prepare_training(args)
@@ -242,23 +244,25 @@ def objective(trial, args):
                 global_step += 1
 
                 # evaluate
-                if global_step % int(args.logging_steps * 64/args.train_batch_size) == 0:
+                if global_step % int(args.logging_steps * 64 / args.train_batch_size) == 0:
                     results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
                     print("\n\n", results["acc"], "\n")
                     # early stopping
-                    if results["acc"] < best_score:
+                    if results["acc"] <= best_score:
                         stop_count += 1
                     else:
                         stop_count = 0
                         best_score = results["acc"]
 
                     # stop training when patience count is reached
-                    if stop_count == args.early_stop:
+                    # or it meets this stupid ill-defined metric shit
+                    if stop_count == args.early_stop or results["acc"] == 0.5 and stop_count >= 1:
                         print("\nSTOPPING EARLY\n")
                         trial.report(results["acc"], rep_counter)
                         return best_score
 
-                    if args.report_steps == -1 or global_step % int(args.report_steps * 64/args.train_batch_size) == 0:
+                    if args.report_steps == -1 or global_step % int(
+                            args.report_steps * 64 / args.train_batch_size) == 0:
                         print("REPORTING\n")
                         trial.report(results["acc"], rep_counter)
                         rep_counter += 1
@@ -279,13 +283,13 @@ def objective(trial, args):
         # logs["loss"] = loss_scalar
         # logging_loss = tr_loss
 
-                # if not os.path.exists(args.output_dir + "/tr_args.csv"):
-                #     headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
-                # else:
-                #     headers = ""
-                # with open(args.output_dir + "/tr_args.csv", "a") as writer:
-                #     writer.write(headers + ",".join(
-                #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
+        # if not os.path.exists(args.output_dir + "/tr_args.csv"):
+        #     headers = ",".join(["global_step", "learning_rate", "training_loss"]) + "\n"
+        # else:
+        #     headers = ""
+        # with open(args.output_dir + "/tr_args.csv", "a") as writer:
+        #     writer.write(headers + ",".join(
+        #         str(x) for x in [global_step, logs.get("learning_rate"), logs.get("loss")]) + "\n")
 
     results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start, prefix=run_dir)
     if results["acc"] > best_score:
@@ -418,7 +422,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
-    parser.add_argument("--gpu_id", type=int, default=0, help="To run on cluster with multiple gpus. Set this to the device id")
+    parser.add_argument("--gpu_id", type=int, default=0,
+                        help="To run on cluster with multiple gpus. Set this to the device id")
     parser.add_argument(
         "--fp16",
         action="store_true",
@@ -447,9 +452,8 @@ if __name__ == "__main__":
                                                                           n_startup_trials=3),
                                               patience=2)
 
-    # ,
-      #  storage="mysql://example",
-     #   load_if_exists=True
+        , storage=create_connection("example.db"),
+        load_if_exists=True
     )
     study.optimize(lambda trial: objective(trial, args), n_trials=40, timeout=345000)
 
@@ -471,5 +475,3 @@ if __name__ == "__main__":
     print("  Params: ")
     for key, value in trial.params.items():
         print("    {}: {}".format(key, value))
-
-
