@@ -399,7 +399,9 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
     eval_outputs_dirs = (args.output_dir, args.output_dir + "-MM") if args.task_name == "mnli" else (args.output_dir,)
     if args.task_name[:3] == "dna":
         softmax = torch.nn.Softmax(dim=1)
-        
+
+    print("\n %s" % args.n_gpu)
+    torch.set_printoptions(profile="full")
 
     results = {}
     for eval_task, eval_output_dir in zip(eval_task_names, eval_outputs_dirs):
@@ -441,7 +443,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 # print("\n")
                 # print("label eq 1 len: \n %s" % (inputs["labels"] == 1).sum())
                 # print("\n")
-                # print("\n\ninput label len: \n %s" % len(inputs["labels"]))
+                print("\n\ninput label len in batch: \n %s" % len(inputs["labels"]))
                 if (inputs["labels"] == 0).sum() + (inputs["labels"] == 1).sum() != len(inputs["labels"]):
                     print("\nPROBLEM here, unaccounted labels")
 
@@ -463,6 +465,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 preds = logits.detach().cpu().numpy()
                 out_label_ids = inputs["labels"].detach().cpu().numpy()
             else:
+                print("\npreds in batch\n%s" % preds)
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
                 out_label_ids = np.append(out_label_ids, inputs["labels"].detach().cpu().numpy(), axis=0)
 
@@ -478,12 +481,14 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 if args.do_ensemble_pred:
                     probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
                 else:
+                    print("\npreds:\n%s" % preds)
                     probs = softmax(torch.tensor(preds, dtype=torch.float32))[:,1].numpy()
                     print("\n %s \n" % probs)
             elif args.task_name == "dnasplice":
                 probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
             preds = np.argmax(preds, axis=1)
             if (preds == 1).sum() - (preds == 0).sum() > len(preds) * 0.2:
+                print("\npreds below\n%s" % preds)
                 print("\nWARN here, prediction label difference of >20%")
                 print("\npreds:\n0s: %s\n1s: %s" % ((preds == 0).sum(), (preds == 1).sum()))
         elif args.output_mode == "regression":

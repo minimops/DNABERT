@@ -322,6 +322,13 @@ if __name__ == "__main__":
         help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
     )
     parser.add_argument(
+        "--study_name",
+        default=None,
+        type=str,
+        required=True,
+        help="Name of the optuna study",
+    )
+    parser.add_argument(
         "--n_process",
         default=2,
         type=int,
