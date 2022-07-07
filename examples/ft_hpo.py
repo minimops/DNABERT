@@ -96,12 +96,12 @@ def prepare_training(args):
 
 def objective(trial, args):
     # create trial arguments
-    args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 1e-3, log=True)
+    args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 4e-4, log=True)
     args.per_gpu_train_batch_size = trial.suggest_int("per_gpu_train_batch_size", 5, 8)
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
-    args.weight_decay = trial.suggest_int("weight_decay", 2, 4)
+    args.weight_decay = trial.suggest_int("weight_decay", 1, 3)
     # dropout probabilities
     args.hidden_dropout_prob = trial.suggest_int("hidden_dropout_prob", 1, 4)
 

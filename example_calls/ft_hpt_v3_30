@@ -1,7 +1,7 @@
 export KMER=6
 export MODEL_PATH=$PROJECT/models/pt_hpt/pt_hpt_v3_30
-export DATA_PATH=$PROJECT/created_data/ft_hpt_v3_setup_v3
-export OUTPUT_PATH=$PROJECT/models/ft_pt_hpt/ft_hpt_v3_30
+export DATA_PATH=$PROJECT/created_data/ft_hpo_10
+export OUTPUT_PATH=$PROJECT/models/test_ill
 
 python run_finetune.py \
     --model_type dna \

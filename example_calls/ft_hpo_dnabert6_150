@@ -1,7 +1,7 @@
 export KMER=6
 export MODEL_PATH=$PROJECT/models/pt_hpt/pt_hpt_v3_30
 export DATA_PATH=$PROJECT/created_data/ft_hpo_10
-export OUTPUT_PATH=$PROJECT/models/ft_hpo/scale_test2
+export OUTPUT_PATH=$PROJECT/models/ft_hpo/scale_test_frozen_2
 
 python ft_hpo.py \
     --model_type dna \
@@ -19,4 +19,4 @@ python ft_hpo.py \
     --num_train_epochs 6.0 \
     --fp16 \
     --freeze \
-    --study_name scale_test2
+    --study_name scale_test_frozen
