@@ -1,7 +1,7 @@
 export KMER=6
 export MODEL_PATH=$PROJECT/models/pt_hpt/pt_hpt_v3_30
 export DATA_PATH=$PROJECT/created_data/ft_hpo_10
-export OUTPUT_PATH=$PROJECT/models/test_ill
+export OUTPUT_PATH=$PROJECT/models/test_fr_unfr_2
 
 python run_finetune.py \
     --model_type dna \
@@ -26,5 +26,4 @@ python run_finetune.py \
     --weight_decay 0.01 \
     --n_process 24 \
     --fp16 \
-    --freeze \
     --add_run_info 'ft run frozen layers. For hpt scale setup'

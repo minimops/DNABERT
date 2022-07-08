@@ -443,7 +443,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 # print("\n")
                 # print("label eq 1 len: \n %s" % (inputs["labels"] == 1).sum())
                 # print("\n")
-                print("\n\ninput label len in batch: \n %s" % len(inputs["labels"]))
+                # print("\n\ninput label len in batch: \n %s" % len(inputs["labels"]))
                 if (inputs["labels"] == 0).sum() + (inputs["labels"] == 1).sum() != len(inputs["labels"]):
                     print("\nPROBLEM here, unaccounted labels")
 
@@ -481,7 +481,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 if args.do_ensemble_pred:
                     probs = softmax(torch.tensor(preds, dtype=torch.float32)).numpy()
                 else:
-                    print("\npreds:\n%s" % preds)
+                    # print("\npreds:\n%s" % preds)
                     probs = softmax(torch.tensor(preds, dtype=torch.float32))[:,1].numpy()
                     print("\n %s \n" % probs)
             elif args.task_name == "dnasplice":

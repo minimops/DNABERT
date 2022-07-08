@@ -460,14 +460,14 @@ if __name__ == "__main__":
     study = optuna.create_study(
         study_name=args.study_name,
         direction="maximize"
-        , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=3,
+        , pruner=optuna.pruners.PatientPruner(optuna.pruners.MedianPruner(n_warmup_steps=2,
                                                                           n_startup_trials=3),
                                               patience=2)
 
         , storage=create_connection("example.db"),
         load_if_exists=True
     )
-    study.optimize(lambda trial: objective(trial, args), n_trials=40, timeout=345000)
+    study.optimize(lambda trial: objective(trial, args), n_trials=40, timeout=258500)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
