@@ -245,10 +245,10 @@ df.to_csv("created_data/ft_hpo_10/" + "dev.tsv", sep='\t', index=False)
 
 
 ##### 10 percent stride 3
-# ~8M examples for 10percent of labels finetuning
+# ~8.4M examples for 10percent of labels finetuning
 dfs_10per_stride3 = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_10percent", "../data/viral-phage_1_3/train_10percent"],
                 name='ft_10p_s3', path='created_data', cap=4500, kmer=6, filetype="train",
-                cutlength=150, s=3, max_mult=2, #perc=4194304,
+                cutlength=150, s=3, max_mult=2, perc=4194304,
                 add_info='')
 
 
@@ -260,21 +260,21 @@ with open('created_data/ft_10_s3_150.pkl', 'wb') as outp:
 # creates ~2M hpo examples
 num = 1048576 # 2^x
 dfs = []
-for df in dfs_10per:
+for df in dfs_10per_stride3:
     df = df.sample(num).reset_index(drop=True)
-    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=1), axis=1)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=3), axis=1)
     dfs.append(df)
 df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
 df.to_csv("created_data/ft_hpo_10_s3/" + "train.tsv", sep='\t', index=False)
 
 
 # ~1.2M examples to validate on
-dfs_10_dev = ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
+dfs_10_s3_dev = ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
                 name='ft_10p_s3', path='created_data', cap=256, kmer=6, filetype="dev",
-                cutlength=150, max_mult=1, perc=614400,
+                cutlength=150, s=3, max_mult=1, perc=614400,
                 add_info='')
 
-dfs5 = dfs_10_dev
+dfs5 = dfs_10_s3_dev
 import pickle
 with open('created_data/ft_150_s3_dev.pkl', 'wb') as outp:
     pickle.dump(dfs5, outp, pickle.HIGHEST_PROTOCOL)
@@ -282,9 +282,9 @@ with open('created_data/ft_150_s3_dev.pkl', 'wb') as outp:
 # creates ~750k examples for hpo
 num = 378880 # *2 divisbible by 2048
 dfs = []
-for df in dfs_10_dev:
+for df in dfs_10_s3_dev:
     df = df.sample(num).reset_index(drop=True)
-    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=1), axis=1)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=3), axis=1)
     dfs.append(df)
 df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
 df.to_csv("created_data/ft_hpo_10_s3/" + "dev.tsv", sep='\t', index=False)

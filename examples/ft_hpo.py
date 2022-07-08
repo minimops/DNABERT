@@ -467,7 +467,7 @@ if __name__ == "__main__":
         , storage=create_connection("example.db"),
         load_if_exists=True
     )
-    study.optimize(lambda trial: objective(trial, args), n_trials=40, timeout=258500)
+    study.optimize(lambda trial: objective(trial, args), n_trials=50, timeout=258500)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
