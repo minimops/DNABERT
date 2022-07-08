@@ -461,7 +461,7 @@ def evaluate(args, model, tokenizer, global_step, prefix="", evaluate=True, time
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
             if preds is None:
-                print("\npreds is none")
+                # print("\npreds is none")
                 preds = logits.detach().cpu().numpy()
                 out_label_ids = inputs["labels"].detach().cpu().numpy()
             else:
