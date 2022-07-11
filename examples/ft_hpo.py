@@ -59,7 +59,7 @@ def create_config(config_class, args, num_labels):
     config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
     if args.model_type in ["dnalong", "dnalongcat"]:
         assert args.max_seq_length % 512 == 0
-    config.split = int(args.max_seq_length / 512)
+    config.split = int(args.max_seq_length / args.max_tokens)
     config.rnn = args.rnn
     config.num_rnn_layer = args.num_rnn_layer
     config.rnn_dropout = args.rnn_dropout
@@ -403,6 +403,9 @@ if __name__ == "__main__":
         "--early_stop", default=0, type=int, help="set this to a positive integer if you want to perform early stop. The model will stop \
                                                     if the acc keep decreasing early_stop times",
     )
+
+    parser.add_argument("--max_tokens", default=512, type=int, help="Number of tokens the model is limited to")
+
     parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
