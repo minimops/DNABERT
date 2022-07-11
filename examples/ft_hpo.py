@@ -108,7 +108,7 @@ def objective(trial, args):
     # map ints to percentage
     args.warmup_percent = args.warmup_percent * 0.05
     args.per_gpu_train_batch_size = 2 ** args.per_gpu_train_batch_size
-    args.weight_decay = 10 ** args.weight_decay
+    args.weight_decay = 10 ** -args.weight_decay
     args.hidden_dropout_prob = args.hidden_dropout_prob * 0.1
 
     # Setup CUDA, GPU & distributed training
