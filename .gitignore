@@ -20,3 +20,5 @@ Test_runs/
 output_txt_file_test/
 created_data/
 data_testing_stuff/
+*.pkl
+*.db
