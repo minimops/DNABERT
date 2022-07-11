@@ -101,7 +101,7 @@ def objective(trial, args):
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
-    args.weight_decay = trial.suggest_int("weight_decay", 1, 3)
+    args.weight_decay = trial.suggest_int("weight_decay", -1, 3)
     # dropout probabilities
     args.hidden_dropout_prob = trial.suggest_int("hidden_dropout_prob", 1, 4)
 
