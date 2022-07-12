@@ -19,6 +19,7 @@ import re
 from timeit import default_timer as timer
 import torch
 import joblib
+from math import log2
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from tqdm import tqdm, trange
 
@@ -97,7 +98,7 @@ def prepare_training(args):
 def objective(trial, args):
     # create trial arguments
     args.learning_rate = trial.suggest_float("learning_rate", 5e-6, 4e-4, log=True)
-    args.per_gpu_train_batch_size = trial.suggest_int("per_gpu_train_batch_size", 5, 8)
+    args.per_gpu_train_batch_size = trial.suggest_int("per_gpu_train_batch_size", 5, int(log2(args.max_train_bs)))
     args.warmup_percent = trial.suggest_int("warmup_percent", 1, 4)
     # additional stuff
     # weight decay
@@ -393,6 +394,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--do_lower_case", action="store_true", help="Set this flag if you are using an uncased model.",
     )
+
+    parser.add_argument(
+        "--max_train_bs", default=256, type=int, help="max training per gpu batch size for study",
+    )
+
     parser.add_argument(
         "--per_gpu_train_batch_size", default=8, type=int, help="Batch size per GPU/CPU for training.",
     )

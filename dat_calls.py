@@ -195,7 +195,8 @@ token_dat(pred_data_process(["../data/viral-no-phage_1_3/test", "../data/viral-p
                             cutlength=1000, cap=64), name="pred_test_1000", path="created_data", kmer=6, s=1)
 ###
 
-
+################################
+# 150nt
 #####
 # ~8M examples for 10percent of labels finetuning
 dfs_10per = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_10percent", "../data/viral-phage_1_3/train_10percent"],
@@ -289,3 +290,126 @@ for df in dfs_10_s3_dev:
 df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
 df.to_csv("created_data/ft_hpo_10_s3/" + "dev.tsv", sep='\t', index=False)
 ####
+
+
+
+##### 1 percent 150nt
+# ~2M examples for 1percent of labels finetuning
+dfs_1per_150nt = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_1percent", "../data/viral-phage_1_3/train_1percent"],
+                name='ft_1p_s1', path='created_data', cap=10800, kmer=6, filetype="train",
+                cutlength=150, max_mult=3, perc=1048576,
+                add_info='')
+
+# stride 3
+# ~2M examples for 1percent of labels finetuning
+dfs_1per_150nt_s3 = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_1percent", "../data/viral-phage_1_3/train_1percent"],
+                name='ft_1p_s3', path='created_data', cap=10800, kmer=6, filetype="train",
+                cutlength=150, s=3, max_mult=3, perc=1048576,
+                add_info='')
+
+##### 0.1 percent 150nt
+# ~512k examples for 0.1percent of labels finetuning
+dfs_01per_150nt = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train0_1percent", "../data/viral-phage_1_3/train0_1percent"],
+                name='ft_01p_s1', path='created_data', cap=30000, kmer=6, filetype="train",
+                cutlength=150, max_mult=3, perc=262144,
+                add_info='')
+
+# stride 3
+# ~512k examples for 0.1percent of labels finetuning
+dfs_01per_150nt_s3 = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train0_1percent", "../data/viral-phage_1_3/train0_1percent"],
+                name='ft_01p_s3', path='created_data', cap=30000, kmer=6, filetype="train",
+                cutlength=150, s=3, max_mult=3, perc=262144,
+                add_info='')
+
+
+
+
+########### 1000nt
+
+# ~2M examples for 10percent of labels finetuning
+dfs_10per_1k = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_10percent", "../data/viral-phage_1_3/train_10percent"],
+                name='ft_10_1k_s1', path='created_data', cap=1200, kmer=6, filetype="train",
+                cutlength=1000, max_mult=1, perc=1048576,
+                add_info='')
+
+dfsX1 = dfs_10per_1k
+# import pickle
+# with open('created_data/ft_10_150.pkl', 'wb') as outp:
+#     pickle.dump(dfs2, outp, pickle.HIGHEST_PROTOCOL)
+
+# creates ~500k hpo examples
+num = 262144 # 2^x
+dfs = []
+for df in dfsX1:
+    df = df.sample(num).reset_index(drop=True)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=1), axis=1)
+    dfs.append(df)
+df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
+df.to_csv("created_data/ft_hpo_10_1k/" + "train.tsv", sep='\t', index=False)
+
+
+# ~600k examples to validate on
+dfs_10_dev_1k = ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
+                name='r', path='created_data', cap=128, kmer=6, filetype="dev",
+                cutlength=1000, max_mult=1, perc=307200,
+                add_info='')
+
+dfsX2 = dfs_10_dev_1k
+# import pickle
+# with open('created_data/ft_150_dev.pkl', 'wb') as outp:
+#     pickle.dump(dfs3, outp, pickle.HIGHEST_PROTOCOL)
+
+# creates ~280k examples for hpo
+num = 143360 # *2 divisbible by 2048
+dfs = []
+for df in dfsX2:
+    df = df.sample(num).reset_index(drop=True)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=1), axis=1)
+    dfs.append(df)
+df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
+df.to_csv("created_data/rep/" + "dev.tsv", sep='\t', index=False)
+
+
+#### stride 3
+# ~2M examples for 10percent of labels finetuning
+dfs_10per_1k_s3 = ft_data_process(dirlist=["../data/viral-no-phage_1_3/train_10percent", "../data/viral-phage_1_3/train_10percent"],
+                name='ft_10_1k_s3', path='created_data', cap=1200, kmer=6, filetype="train",
+                cutlength=1000, s=3, max_mult=1, perc=1048576,
+                add_info='')
+
+dfsX3 = dfs_10per_1k_s3
+# import pickle
+# with open('created_data/ft_10_150.pkl', 'wb') as outp:
+#     pickle.dump(dfs2, outp, pickle.HIGHEST_PROTOCOL)
+
+# creates ~500k hpo examples
+num = 262144 # 2^x
+dfs = []
+for df in dfsX3:
+    df = df.sample(num).reset_index(drop=True)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=3), axis=1)
+    dfs.append(df)
+df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
+df.to_csv("created_data/ft_hpo_10_1k_s3/" + "train.tsv", sep='\t', index=False)
+
+
+# ~600k examples to validate on
+dfs_10_dev_1k_s3 = ft_data_process(dirlist=["../data/viral-no-phage_1_3/validation", "../data/viral-phage_1_3/validation"],
+                name='ft_10_1k_s3', path='created_data', cap=128, kmer=6, filetype="dev",
+                cutlength=1000, s=3, max_mult=1, perc=307200,
+                add_info='')
+
+dfsX4 = dfs_10_dev_1k_s3
+# import pickle
+# with open('created_data/ft_150_dev.pkl', 'wb') as outp:
+#     pickle.dump(dfs3, outp, pickle.HIGHEST_PROTOCOL)
+
+# creates ~280k examples for hpo
+num = 143360 # *2 divisbible by 2048
+dfs = []
+for df in dfsX4:
+    df = df.sample(num).reset_index(drop=True)
+    df["sequence"] = df.apply(lambda row: seq2kmer(row[0], k=6, stride=3), axis=1)
+    dfs.append(df)
+df = pd.concat(dfs).sample(frac=1).reset_index(drop=True)
+df.to_csv("created_data/ft_hpo_10_1k_s3/" + "dev.tsv", sep='\t', index=False)
