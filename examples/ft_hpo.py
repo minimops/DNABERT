@@ -15,6 +15,7 @@ from transformers import (
 import pandas as pd
 from sql_db import create_connection
 import numpy as np
+import random
 import re
 from timeit import default_timer as timer
 import torch
@@ -94,6 +95,12 @@ def prepare_training(args):
 
     return config, tokenizer, model
 
+def set_seed(args):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if args.n_gpu > 0:
+        torch.cuda.manual_seed_all(args.seed)
 
 def objective(trial, args):
     # create trial arguments
@@ -116,7 +123,7 @@ def objective(trial, args):
     torch.cuda.set_device(args.gpu_id)
     device = torch.device("cuda", args.gpu_id)
     # torch.distributed.init_process_group(backend="nccl")
-    args.n_gpu = 1
+    args.n_gpu = len(args.gpu_id)
     args.device = device
 
     # Create output directory if needed
@@ -130,6 +137,9 @@ def objective(trial, args):
     with open(output_dir + "/opt_args.csv", "w") as f:
         f.write(", ".join(trial.params.keys()) + "\n")
         f.write(", ".join([str(x) for x in trial.params.values()]))
+
+    # reproducability
+    set_seed(args)
 
     # load model
     config, tokenizer, model = prepare_training(args)
