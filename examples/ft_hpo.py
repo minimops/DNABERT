@@ -60,7 +60,7 @@ def create_config(config_class, args, num_labels):
     config.hidden_dropout_prob = args.hidden_dropout_prob
     config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
     if args.model_type in ["dnalong", "dnalongcat"]:
-        assert args.max_seq_length % 512 == 0
+        assert args.max_seq_length % args.max_tokens == 0
     config.split = int(args.max_seq_length / args.max_tokens)
     config.rnn = args.rnn
     config.num_rnn_layer = args.num_rnn_layer

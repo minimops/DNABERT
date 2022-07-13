@@ -75,6 +75,7 @@ from transformers import glue_output_modes as output_modes
 from transformers import glue_processors as processors
 
 from run_funs import create_run_info_file, complete_run_info_file
+from timeit import default_timer as timer
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -217,6 +218,7 @@ def train(args, train_dataset, model, tokenizer):
             model, device_ids=[args.local_rank], output_device=args.local_rank, find_unused_parameters=True,
         )
 
+    t_start = timer()
     # Train!
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_dataset))
@@ -312,7 +314,7 @@ def train(args, train_dataset, model, tokenizer):
                     if (
                         args.local_rank == -1 and args.evaluate_during_training
                     ):  # Only evaluate when single GPU otherwise metrics may not average well
-                        results = evaluate(args, model, tokenizer, global_step)
+                        results = evaluate(args, model, tokenizer, global_step, timestamp=timer() - t_start)
 
 
                         if args.task_name == "dna690":
@@ -1048,6 +1050,7 @@ def main():
     parser.add_argument("--server_ip", type=str, default="", help="For distant debugging.")
     parser.add_argument("--server_port", type=str, default="", help="For distant debugging.")
 
+    parser.add_argument("--max_tokens", default=512, type=int, help="Number of tokens the model is limited to")
 
     args = parser.parse_args()
 
@@ -1148,8 +1151,8 @@ def main():
         config.hidden_dropout_prob = args.hidden_dropout_prob
         config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
         if args.model_type in ["dnalong", "dnalongcat"]:
-            assert args.max_seq_length % 512 == 0
-        config.split = int(args.max_seq_length/512)
+            assert args.max_seq_length % args.max_tokens == 0
+        config.split = int(args.max_seq_length / args.max_tokens)
         config.rnn = args.rnn
         config.num_rnn_layer = args.num_rnn_layer
         config.rnn_dropout = args.rnn_dropout
