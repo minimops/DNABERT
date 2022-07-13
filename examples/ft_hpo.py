@@ -120,10 +120,14 @@ def objective(trial, args):
     args.hidden_dropout_prob = args.hidden_dropout_prob * 0.1
 
     # Setup CUDA, GPU & distributed training
-    torch.cuda.set_device(args.gpu_id)
-    device = torch.device("cuda", args.gpu_id)
-    # torch.distributed.init_process_group(backend="nccl")
-    args.n_gpu = len(args.gpu_id)
+    if args.gpu_id != -1:
+        torch.cuda.set_device(args.gpu_id)
+        device = torch.device("cuda", args.gpu_id)
+        # torch.distributed.init_process_group(backend="nccl")
+        args.n_gpu = 1
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+        args.n_gpu = torch.cuda.device_count()
     args.device = device
 
     # Create output directory if needed
