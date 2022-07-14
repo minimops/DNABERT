@@ -607,7 +607,9 @@ def predict(args, model, tokenizer, prefix=""):
             result = compute_metrics(pred_task, preds, out_label_ids, probs[:,1])
         else:
             result = compute_metrics(pred_task, preds, out_label_ids, probs)
-        
+
+        print(result["acc"])
+
         pred_output_dir = args.predict_dir
         if not os.path.exists(pred_output_dir):
                os.makedir(pred_output_dir)
@@ -615,6 +617,13 @@ def predict(args, model, tokenizer, prefix=""):
         logger.info("***** Pred results {} *****".format(prefix))
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))
+
+        with open(args.pred_output_dir + "/pred_results.csv", "a") as writer:
+            for key in sorted(result.keys()):
+                eval_result = eval_result + ("%.6f" % result[key])
+                if key is not sorted(result.keys())[-1]:
+                    eval_result = eval_result + ","
+            writer.write(eval_result + "\n")
         np.save(output_pred_file, probs)
 
 
@@ -1141,32 +1150,24 @@ def main():
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
 
     if not args.do_visualize and not args.do_ensemble_pred:
-        if args.model_name_or_path == "no_pt":
-            if args.config_name:
-                config = config_class.from_pretrained(args.config_name, cache_dir=args.cache_dir)
-            else:
-                config = config_class()
-            model = model_class(config=config)
-            tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, cache_dir=args.cache_dir)
-        else:
-            config = config_class.from_pretrained(
-                args.config_name if args.config_name else args.model_name_or_path,
-                num_labels=num_labels,
-                finetuning_task=args.task_name,
-                cache_dir=args.cache_dir if args.cache_dir else None,
-            )
-            tokenizer = tokenizer_class.from_pretrained(
-                args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
-                do_lower_case=args.do_lower_case,
-                cache_dir=args.cache_dir if args.cache_dir else None,
-            )
-            model = model_class.from_pretrained(
-                args.model_name_or_path,
-                from_tf=bool(".ckpt" in args.model_name_or_path),
-                config=config,
-                cache_dir=args.cache_dir if args.cache_dir else None,
-            )
-            logger.info('finish loading model')
+        config = config_class.from_pretrained(
+            args.config_name if args.config_name else args.model_name_or_path,
+            num_labels=num_labels,
+            finetuning_task=args.task_name,
+            cache_dir=args.cache_dir if args.cache_dir else None,
+        )
+        tokenizer = tokenizer_class.from_pretrained(
+            args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
+            do_lower_case=args.do_lower_case,
+            cache_dir=args.cache_dir if args.cache_dir else None,
+        )
+        model = model_class.from_pretrained(
+            args.model_name_or_path,
+            from_tf=bool(".ckpt" in args.model_name_or_path),
+            config=config,
+            cache_dir=args.cache_dir if args.cache_dir else None,
+        )
+        logger.info('finish loading model')
 
         config.hidden_dropout_prob = args.hidden_dropout_prob
         config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
