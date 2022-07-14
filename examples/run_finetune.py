@@ -1141,13 +1141,33 @@ def main():
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
 
     if not args.do_visualize and not args.do_ensemble_pred:
-        config = config_class.from_pretrained(
-            args.config_name if args.config_name else args.model_name_or_path,
-            num_labels=num_labels,
-            finetuning_task=args.task_name,
-            cache_dir=args.cache_dir if args.cache_dir else None,
-        )
-        
+        if args.model_name_or_path == "no_pt":
+            if args.config_name:
+                config = config_class.from_pretrained(args.config_name, cache_dir=args.cache_dir)
+            else:
+                config = config_class()
+            model = model_class(config=config)
+            tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, cache_dir=args.cache_dir)
+        else:
+            config = config_class.from_pretrained(
+                args.config_name if args.config_name else args.model_name_or_path,
+                num_labels=num_labels,
+                finetuning_task=args.task_name,
+                cache_dir=args.cache_dir if args.cache_dir else None,
+            )
+            tokenizer = tokenizer_class.from_pretrained(
+                args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
+                do_lower_case=args.do_lower_case,
+                cache_dir=args.cache_dir if args.cache_dir else None,
+            )
+            model = model_class.from_pretrained(
+                args.model_name_or_path,
+                from_tf=bool(".ckpt" in args.model_name_or_path),
+                config=config,
+                cache_dir=args.cache_dir if args.cache_dir else None,
+            )
+            logger.info('finish loading model')
+
         config.hidden_dropout_prob = args.hidden_dropout_prob
         config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
         if args.model_type in ["dnalong", "dnalongcat"]:
@@ -1158,18 +1178,7 @@ def main():
         config.rnn_dropout = args.rnn_dropout
         config.rnn_hidden = args.rnn_hidden
 
-        tokenizer = tokenizer_class.from_pretrained(
-            args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
-            do_lower_case=args.do_lower_case,
-            cache_dir=args.cache_dir if args.cache_dir else None,
-        )
-        model = model_class.from_pretrained(
-            args.model_name_or_path,
-            from_tf=bool(".ckpt" in args.model_name_or_path),
-            config=config,
-            cache_dir=args.cache_dir if args.cache_dir else None,
-        )
-        logger.info('finish loading model')
+
 
         # freeze layers
         if args.freeze:
