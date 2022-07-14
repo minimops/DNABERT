@@ -608,7 +608,7 @@ def predict(args, model, tokenizer, prefix=""):
         else:
             result = compute_metrics(pred_task, preds, out_label_ids, probs)
 
-        print(result["acc"])
+        print(result["recall"])
 
         pred_output_dir = args.predict_dir
         if not os.path.exists(pred_output_dir):
@@ -619,6 +619,8 @@ def predict(args, model, tokenizer, prefix=""):
             logger.info("  %s = %s", key, str(result[key]))
 
         with open(pred_output_dir + "/pred_results.csv", "a") as writer:
+            eval_result = ",".join(sorted(result.keys())) \
+                          + "\n"
             for key in sorted(result.keys()):
                 eval_result = eval_result + ("%.6f" % result[key])
                 if key is not sorted(result.keys())[-1]:
