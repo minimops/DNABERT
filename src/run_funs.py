@@ -60,8 +60,11 @@ def create_run_info_file(data_path, path, add_info='', phase='pretraining', mode
 
         if phase == 'finetuning':
             f.write('\npretrained Model dir: ' + model_dir + '\n')
-            f.write('Model dir last modified: ' +
-                    datetime.fromtimestamp(os.stat(model_dir).st_mtime).strftime('%Y-%m-%d-%H:%M') + '\n')
+            try:
+                f.write('Model dir last modified: ' +
+                        datetime.fromtimestamp(os.stat(model_dir).st_mtime).strftime('%Y-%m-%d-%H:%M') + '\n')
+            except FileNotFoundError as f:
+                print("No model dir found")
     print('Created info file at ' + filename)
 
 
