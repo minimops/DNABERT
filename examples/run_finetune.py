@@ -618,7 +618,7 @@ def predict(args, model, tokenizer, prefix=""):
         for key in sorted(result.keys()):
             logger.info("  %s = %s", key, str(result[key]))
 
-        with open(args.pred_output_dir + "/pred_results.csv", "a") as writer:
+        with open(pred_output_dir + "/pred_results.csv", "a") as writer:
             for key in sorted(result.keys()):
                 eval_result = eval_result + ("%.6f" % result[key])
                 if key is not sorted(result.keys())[-1]:
