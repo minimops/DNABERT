@@ -75,7 +75,7 @@ if _has_sklearn:
         acc = simple_accuracy(preds, labels)
         precision = precision_score(y_true=labels, y_pred=preds, average="macro")
         recall = recall_score(y_true=labels, y_pred=preds, average="macro")
-        f1 = f1_score(y_true=labels, y_pred=preds, average="macro")
+        f1 = f1_score(y_true=labels, y_pred=preds, average="binary")
         mcc = matthews_corrcoef(labels, preds)
         auc = roc_auc_score(labels, probs, average="macro", multi_class="ovo")
         return {
@@ -105,7 +105,7 @@ if _has_sklearn:
         elif task_name in ["dna690", "dnapair"]:
             return acc_f1_mcc_auc_aupr_pre_rec(preds, labels, probs)
         elif task_name == "dnaprom":
-            # print("\n predictions: \n %s \n labels: \n %s \n" % (preds, labels))
+            print("\n predictions: \n %s \n labels: \n %s \n" % (preds, labels))
             with warnings.catch_warnings(record=True) as w:
                 res = acc_f1_mcc_auc_pre_rec(preds, labels, probs)
                 if len(w):
