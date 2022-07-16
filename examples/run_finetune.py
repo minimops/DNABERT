@@ -1147,7 +1147,7 @@ def main():
     # Load pretrained model and tokenizer
     if args.local_rank not in [-1, 0]:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab
-    
+
     args.model_type = args.model_type.lower()
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
 
@@ -1158,6 +1158,17 @@ def main():
             finetuning_task=args.task_name,
             cache_dir=args.cache_dir if args.cache_dir else None,
         )
+
+        config.hidden_dropout_prob = args.hidden_dropout_prob
+        config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
+        if args.model_type in ["dnalong", "dnalongcat"]:
+            assert args.max_seq_length % args.max_tokens == 0
+        config.split = int(args.max_seq_length / 512)
+        config.rnn = args.rnn
+        config.num_rnn_layer = args.num_rnn_layer
+        config.rnn_dropout = args.rnn_dropout
+        config.rnn_hidden = args.rnn_hidden
+
         tokenizer = tokenizer_class.from_pretrained(
             args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
             do_lower_case=args.do_lower_case,
@@ -1170,17 +1181,6 @@ def main():
             cache_dir=args.cache_dir if args.cache_dir else None,
         )
         logger.info('finish loading model')
-
-        config.hidden_dropout_prob = args.hidden_dropout_prob
-        config.attention_probs_dropout_prob = args.attention_probs_dropout_prob
-        if args.model_type in ["dnalong", "dnalongcat"]:
-            assert args.max_seq_length % args.max_tokens == 0
-        config.split = int(args.max_seq_length / args.max_tokens)
-        config.rnn = args.rnn
-        config.num_rnn_layer = args.num_rnn_layer
-        config.rnn_dropout = args.rnn_dropout
-        config.rnn_hidden = args.rnn_hidden
-
 
 
         # freeze layers
