@@ -1,21 +1,22 @@
 export KMER=6
 export MODEL_PATH=$PROJECT/models/int_base
-export DATA_PATH=$PROJECT/created_data/ft_hpo_10
-export OUTPUT_PATH=$PROJECT/models/ft_hpo/dnabert6_150
+export DATA_PATH=$PROJECT/created_data/ft_hpo_10_1k
+export OUTPUT_PATH=$PROJECT/models/ft_hpo/virbert_1k
 
 python ft_hpo.py \
-    --model_type dna \
+    --model_type dnalongcat \
     --tokenizer_name=dna$KMER \
     --model_name_or_path $MODEL_PATH \
     --task_name dnaprom \
     --data_dir $DATA_PATH \
-    --max_seq_length 150 \
-    --per_gpu_eval_batch_size 4096 \
+    --max_seq_length 1024 \
+    --per_gpu_eval_batch_size 1024 \
     --output_dir $OUTPUT_PATH \
     --logging_steps 2000 \
     --n_process 32 \
     --early_stop 4 \
-    --gpu_id 0 \
-    --num_train_epochs 6.0 \
+    --gpu_id -1 \
+    --num_train_epochs 5.0 \
     --fp16 \
-    --study_name virbert_150
+    --max_train_bs 128 \
+    --study_name hpo_virbert_1k

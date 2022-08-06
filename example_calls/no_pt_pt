@@ -1,0 +1,35 @@
+export KMER=6
+export TRAIN_FILE=$PROJECT/created_data/pt_10_eval/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_10_eval/full_kmers.txt
+export SOURCE=../
+export OUTPUT_PATH=$PROJECT/models/no_pt
+
+python run_pretrain.py \
+    --output_dir $OUTPUT_PATH \
+    --model_type=dna \
+    --tokenizer_name=dna$KMER \
+    --config_name=$SOURCE/src/transformers/dnabert-config/bert-config-base/config.json \
+    --train_data_file=$TRAIN_FILE \
+    --eval_data_file=$TEST_FILE \
+    --mlm \
+    --do_train \
+    --per_gpu_train_batch_size 50 \
+    --per_gpu_eval_batch_size 50 \
+    --save_steps 500 \
+    --save_total_limit 20 \
+    --max_steps 1 \
+    --evaluate_during_training \
+    --logging_steps 500 \
+    --line_by_line \
+    --learning_rate 0 \
+    --block_size 512 \
+    --adam_epsilon 1e-6 \
+    --weight_decay 0.01 \
+    --beta1 0.9 \
+    --beta2 0.98 \
+    --mlm_probability 0.0 \
+    --warmup_steps 0 \
+    --overwrite_output_dir \
+    --n_process 24 \
+    --add_run_info 'no steps trial' \
+    --fp16

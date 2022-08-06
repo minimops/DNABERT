@@ -1,4 +1,0 @@
-  File "run_pretrain.py", line 102
-    def __init__(self, tokenizer: PreTrainedTokenizer, args, file_path: str, block_size=512):
-                                ^
-SyntaxError: invalid syntax
