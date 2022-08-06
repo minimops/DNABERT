@@ -1,18 +1,18 @@
-## Transformer Model for Genome Sequence Analysis
-### BA-Thesis
+# Transformer Model for Genome Sequence Analysis
+## BA-Thesis
 
 Institut: Statistik, LMU Muenchen   
 Project supervisors: Prof. Dr. Mina Rezaei, Hüseyin Anil Gündüz, Martin Binder   
 Author: Noah Hurmer 
 
-# DNABERT
+## DNABERT
 This repository is forked form the original implementation of 'DNABERT: pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome' by
 
 Yanrong Ji, Zhihan Zhou, Han Liu, Ramana V Davuluri, DNABERT: pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome, Bioinformatics, 2021;, btab083, https://doi.org/10.1093/bioinformatics/btab083
 
 It was created to investigate the DNABERT model's proficiency on virus genome data and tasks in context to the GenomeNet project.
 
-## 1. Environment setup
+### 1. Environment setup
 
 We recommend you to build a python virtual environment with [Anaconda](https://docs.anaconda.com/anaconda/install/linux/). Also, please make sure you have at least one NVIDIA GPU with Linux x86_64 Driver Version >= 410.48 (compatible with CUDA 10.0). We applied distributed training on 8 NVIDIA GeForce RTX 2080 Ti with 11 GB graphic memory, and the batch size corresponds to it. If you use GPU with other specifications and memory sizes, consider adjusting your batch size accordingly.
 
