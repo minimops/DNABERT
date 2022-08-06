@@ -1,13 +1,16 @@
+## Transformer Model for Genome Sequence Analysis
+### BA-Thesis
+
+Institut: Statistik, LMU Muenchen
+Project supervisors: Prof. Dr. Mina Rezaei, Hüseyin Anil Gündüz, Martin Binder
+Author: Noah Hurmer 
+
 # DNABERT
-This repository includes the implementation of 'DNABERT: pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome'. Please cite our paper if you use the models or codes. The repo is still actively under development, so please kindly report if there is any issue encountered.
-
- In this package, we provides resources including: source codes of the DNABERT model, usage examples, pre-trained models, fine-tuned models and visulization tool. This package is still under development, as more features will be included gradually. Training of DNABERT consists of general-purposed pre-training and task-specific fine-tuning. As a contribution of our project, we released the pre-trained models in this repository. We extended codes from [huggingface](https://github.com/huggingface/transformers) and adapted them to the DNA scenario.
-
-## Citation
-If you have used DNABERT in your research, please kindly cite the following publication:
+This repository is forked form the original implementation of 'DNABERT: pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome' by
 
 Yanrong Ji, Zhihan Zhou, Han Liu, Ramana V Davuluri, DNABERT: pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome, Bioinformatics, 2021;, btab083, https://doi.org/10.1093/bioinformatics/btab083
 
+It was created to investigate the DNABERT model's proficiency on virus genome data and tasks in context to the GenomeNet project.
 
 ## 1. Environment setup
 
