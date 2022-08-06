@@ -1,8 +1,8 @@
 ## Transformer Model for Genome Sequence Analysis
 ### BA-Thesis
 
-Institut: Statistik, LMU Muenchen
-Project supervisors: Prof. Dr. Mina Rezaei, Hüseyin Anil Gündüz, Martin Binder
+Institut: Statistik, LMU Muenchen   
+Project supervisors: Prof. Dr. Mina Rezaei, Hüseyin Anil Gündüz, Martin Binder   
 Author: Noah Hurmer 
 
 # DNABERT
