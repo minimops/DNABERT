@@ -12,6 +12,7 @@ Yanrong Ji, Zhihan Zhou, Han Liu, Ramana V Davuluri, DNABERT: pre-trained Bidire
 
 It was created to investigate the DNABERT model's proficiency on virus genome data and tasks in context to the *GenomeNet* project.   
 Changes have been made to implement additional features as well as accomodate the new data and task setup. The thesis can be found as the `BA_DNA_BERT.pdf` file.
+
 For a more detailed setup description of DNABERT, please refer to [the original Readme](DNABERT_README.md).
 
 ### 1. Environment setup
