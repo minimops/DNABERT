@@ -11,7 +11,7 @@ This repository is forked from the original implementation of 'DNABERT: pre-trai
 Yanrong Ji, Zhihan Zhou, Han Liu, Ramana V Davuluri, DNABERT: pre-trained Bidirectional Encoder Representations from Transformers model for DNA-language in genome, Bioinformatics, 2021;, btab083, https://doi.org/10.1093/bioinformatics/btab083
 
 It was created to investigate the DNABERT model's proficiency on virus genome data and tasks in context to the *GenomeNet* project.   
-Changes have been made to implement additional features as well as accomodate the new data and task setup.
+Changes have been made to implement additional features as well as accomodate the new data and task setup. The thesis can be found as the `BA_DNA_BERT.pdf` file.
 For a more detailed setup description of DNABERT, please refer to [the original Readme](DNABERT_README.md).
 
 ### 1. Environment setup
