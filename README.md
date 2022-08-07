@@ -106,7 +106,7 @@ python run_pretrain.py \
 Add --fp16 tag if you want to perfrom mixed precision. (You have to install the 'apex' from source first).
 
 
-## 3. Fine-tune (Skip this section if you use fine-tuned model)
+### 3. Fine-tune
 
 #### Download pre-trained models (coming)
 
@@ -185,7 +185,7 @@ python run_finetune.py \
 Add --fp16 tag if you want to perfrom mixed precision. (You have to install the 'apex' from source first).
 
 
-## 4. Prediction
+### 4. Prediction
 
 After the model is fine-tuned, we can get predictions by running
 
