@@ -46,21 +46,21 @@ The warning message will also suggest this. For the future, a more permanent sol
 pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 ```
 
-
+HPO is performed with `optuna` (see below). So this is an additional required install, along with `mysql3` if HPO is desired.
 
 ### 2. Pre-train
 
-#### 2.1 Data processing
+#### Data processing
 
-Please see the template data at `/example/sample_data/pre`. If you are trying to pre-train DNABERT with your own data, please process you data into the same format as it. Note that the sequences are in kmer format, so you will need to convert your sequences into that. We also provide a custom function `seq2kmer`in `motif/motif_utils.py` for this conversion.
+Functions to preprocess genome data for pretraining, finetuning or prediction from FASTA-files can be found in `dna_dat_process`.
+Specific calls on how certain data was created for the conducted experiments can also be found there.
 
+Make sure data in the form of the example: `/example/sample_data/pre`.
 
+#### Model Training
 
-In the following example, we use DNABERT with kmer=6 as example.
-
-
-
-#### 2.2 Model Training
+Specific pt calls can be found at `dna_train_calls`, other can also be found at `examples/example_calls`.
+The below calls are just examples with sample data from DNABERT.
 
 ```
 cd examples
@@ -108,10 +108,7 @@ Add --fp16 tag if you want to perfrom mixed precision. (You have to install the 
 
 ## 3. Fine-tune (Skip this section if you use fine-tuned model)
 
-#### 3.1 Data processing
-
-
-#### 3.2 Download pre-trained models (coming)
+#### Download pre-trained models (coming)
 
 [virBERT]()
 
@@ -119,8 +116,38 @@ Add --fp16 tag if you want to perfrom mixed precision. (You have to install the 
 
 [virbert-stride3]()
 
+#### HPO
 
-#### 3.3 Fine-tune
+Tools to perform Hyperparameter Optimization for Finetuning can be found at `examples/dna_hpo`.
+Below is an example of how to start a study. Use the `gpu_id` for distributed training.
+
+```
+export KMER=6
+export MODEL_PATH=PATH_TO_MODEL
+export DATA_PATH=PATH_TO_DATA
+export OUTPUT_PATH=OUTPUT_DIR
+
+python ft_hpo.py \
+    --model_type dna \
+    --tokenizer_name=dna$KMER \
+    --model_name_or_path $MODEL_PATH \
+    --task_name dnaprom \
+    --data_dir $DATA_PATH \
+    --max_seq_length 340 \
+    --per_gpu_eval_batch_size 512 \
+    --output_dir $OUTPUT_PATH \
+    --logging_steps 800 \
+    --n_process 32 \
+    --early_stop 5 \
+    --gpu_id 0 \
+    --num_train_epochs 5.0 \
+    --fp16 \
+    --max_tokens 340 \
+    --max_train_bs 128 \
+    --study_name hpo_stride3_1000
+```
+
+#### Fine-tune
 
 ```
 cd examples

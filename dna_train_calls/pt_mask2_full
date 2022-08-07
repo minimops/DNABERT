@@ -1,8 +1,8 @@
 export KMER=6
-export TRAIN_FILE=$PROJECT/created_data/pt_full_train/full_kmers.txt
-export TEST_FILE=$PROJECT/created_data/pt_10_eval/full_kmers.txt
+export TRAIN_FILE=$PROJECT/created_data/pt_full_train_v9/full_kmers.txt
+export TEST_FILE=$PROJECT/created_data/pt_10_eval_v2/full_kmers.txt
 export SOURCE=../
-export OUTPUT_PATH=$PROJECT/Test_runs/pt_dnabert_exact_full_4
+export OUTPUT_PATH=$PROJECT/models/pt_dnabert6_mask8
 
 python run_pretrain.py \
     --output_dir $OUTPUT_PATH \
@@ -17,24 +17,22 @@ python run_pretrain.py \
     --gradient_accumulation_steps 5 \
     --per_gpu_train_batch_size 50 \
     --per_gpu_eval_batch_size 50 \
-    --save_steps 500 \
+    --save_steps 2000 \
     --save_total_limit 20 \
     --max_steps 200000 \
     --evaluate_during_training \
-    --logging_steps 500 \
+    --logging_steps 2000 \
     --line_by_line \
-    --learning_rate 4e-4 \
+    --learning_rate 1e-3 \
     --block_size 512 \
     --adam_epsilon 1e-6 \
     --weight_decay 0.01 \
     --beta1 0.9 \
     --beta2 0.98 \
-    --mlm_probability 0.025 \
-    --warmup_steps 10000 \
+    --mlm_probability 0.01875 \
+    --warmup_steps 20000 \
     --overwrite_output_dir \
-    --n_process 24 \
-    --add_run_info 'pt of full bert with all of the paper params, full train data' \
-    --mlm_step_value 100000 \
-    --mlm_prob_step 0.03333334 \
-    --should_continue \
+    --n_process 30 \
+    --mask_like 8 \
+    --add_run_info 'pt of full bert, mask k+2, best model from hpt, full train data' \
     --fp16
