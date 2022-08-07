@@ -212,3 +212,12 @@ python run_finetune.py \
 With the above command, the fine-tuned DNABERT model will be loaded from `MODEL_PATH` , and makes prediction on the `dev.tsv` file that saved in `DATA_PATH` and save the prediction result at `PREDICTION_PATH`.
 
 Add --fp16 tag if you want to perfrom mixed precision. (You have to install the 'apex' from source first).
+
+
+### Acknowledgements
+
+This research has been made possible by the contribution of Yanrong Ji, Zhihan Zhou, Han Liua and Ramana V Davuluri with their publication of the DNABERT model code.
+
+Sincere thanks goes to the supervisors of this thesis (namely Dr. Mina Rezaei, Hüseyin Anil Gündüz and Martin Binder) for support and guidance throughout the project as well as to the GenomeNet team for its cooperation, especially towards René Mreches and Philipp Münch of the HZI for helpful discussions.
+
+This work has been funded in part by the German Federal Ministry of Education and Research (BMBF) under Grant No.01IS18036A, Munich Center for Machine Learning (MCML). Support in computational resources have also been provided under Prof. Dr. Bernd Bischl of the Statistical Learning and Data Science chair at LMU Munich.
