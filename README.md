@@ -109,13 +109,13 @@ Add --fp16 tag if you want to perfrom mixed precision. (You have to install the 
 
 ### 3. Fine-tune
 
-#### Download pre-trained models (coming)
+#### Download pre-trained models
 
-[virBERT]()
+[virBERT](https://drive.google.com/drive/folders/1ggmIU3Gw6EfR-NJqso6xSqeQXMZdv58K?usp=sharing)
 
-[virBERT-mask8]()
+[virBERT-mask8](https://drive.google.com/drive/folders/1ZVs2Kp0IgX2QrOSmlUpP0uJyXn7UfBOy?usp=sharing)
 
-[virbert-stride3]()
+[virbert-stride3](https://drive.google.com/drive/folders/1Roz8w4sxPtyXTNfZRuiTvqihWxPYtQLi?usp=sharing)
 
 #### HPO
 
